@@ -1,0 +1,3 @@
+[submodule "analysis/tools/couchdb-dump"]
+	path = analysis/tools/couchdb-dump
+	url = ../../danielebailo/couchdb-dump.git
