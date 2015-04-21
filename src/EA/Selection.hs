@@ -2,18 +2,18 @@ module EA.Selection ( rouletteSelGen
                     , tournamentSelGen) where
 
 import           EA                   (MutSelector)
-import           EA.Fitness           (FitnessAssigner, sortByFit)
-import           MOP                  (Objectives (..))
+import           EA.Utils             (FitnessAssigner, sortByFit)
+import           MOP                  (Objectives (..), WithObjs (..))
 import           Utils                (With (..))
-import           Utils.Random         (getRandPos)
+import           Utils.Random         (uniRandPos)
 
 import           Control.Monad.Random (RandomGen, getRandomR)
 import           Data.Vector          ((!))
 import qualified Data.Vector          as Vec
 
 
-rouletteSelGen::(Objectives o, Ord f, RandomGen g)=>
-                FitnessAssigner f c o->MutSelector g c o
+rouletteSelGen::(WithObjs o, Ord f, RandomGen g)=>
+                FitnessAssigner f o ->MutSelector g o
 rouletteSelGen fa pop = select
   where s = (1/) . foldl (\x y->x+1/fromIntegral y) 0 $ [1..Vec.length pop] :: Double
         ws = Vec.fromList . map ((s/) . fromIntegral) $ [1..Vec.length pop]
@@ -25,8 +25,8 @@ rouletteSelGen fa pop = select
                       then return $ pop ! i
                       else select
 
-tournamentSelGen::(Objectives o, RandomGen g)=>MutSelector g c o
-tournamentSelGen pop = do [l0, l1] <- getRandPos 2 $ Vec.length pop
+tournamentSelGen::(WithObjs o, RandomGen g)=>MutSelector g o
+tournamentSelGen pop = do [l0, l1] <- uniRandPos 2 $ Vec.length pop
                           let i0 = pop ! l0
                               i1 = pop ! l1
-                          return $ if elem1 i0 <<< elem1 i1 then i0 else i1
+                          return $ if getObjs i0 <<< getObjs i1 then i0 else i1

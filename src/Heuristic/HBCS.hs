@@ -1,23 +1,23 @@
 module Heuristic.HBCS (hbcs) where
 
-import Problem
-import Heuristic
-import Heuristic.HEFT (heft)
-import Heuristic.Cheap (cheap)
+import           Heuristic
+import           Heuristic.Cheap (cheap)
+import           Heuristic.HEFT  (heft)
+import           Problem
 
-import Data.Vector (Vector, (//))
-import qualified Data.Vector as Vec
-import Data.List (maximumBy, minimumBy, sortBy)
-import Data.Ord (comparing)
+import           Data.List       (maximumBy, minimumBy, sortBy)
+import           Data.Ord        (comparing)
+import           Data.Vector     (Vector, (//))
+import qualified Data.Vector     as Vec
 
-data CPartial pl = CPar { _pool::pl --Pool
-                        , _locations::Vector Ins
+data CPartial pl = CPar { _pool        :: pl --Pool
+                        , _locations   :: Vector Ins
                           -- State Information
-                        , _rb::Cost
-                        , _rcb::Cost
-                        , _lastFT::Time
-                        , _lastC::Cost
-                        , _finishTimes::Vector Time}
+                        , _rb          :: Cost
+                        , _rcb         :: Cost
+                        , _lastFT      :: Time
+                        , _lastC       :: Cost
+                        , _finishTimes :: Vector Time}
 
 instance PartialSchedule CPartial where
   locations = _locations

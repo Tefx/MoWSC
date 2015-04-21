@@ -1,14 +1,18 @@
-module MOP ( Objectives (..)
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies     #-}
+
+module MOP ( Objectives (..), WithObjs (..)
            , initNorm, norm, Normaliser
            , MakespanCost) where
 
 import qualified Data.Vector as Vec
+import           Numeric     (showFFloat)
 
 import           Utils
 
 type ObjValue = Double
 
-class Objectives a where
+class (Show a)=>Objectives a where
   dimesion::a->Int
   (@!)::a->Int->ObjValue
   (<<<)::a->a->Bool
@@ -18,21 +22,28 @@ class Objectives a where
   dimesion = length . toList
   toList a = map (a@!) [0..dimesion a-1]
 
+class (Objectives (Objs a))=>WithObjs a where
+  type Objs a:: *
+  getObjs::a->Objs a
+
 data Normaliser = Norm { _ms :: [Double]
                        , _ds :: [Double]}
 
-initNorm::(Objectives o)=>Vec.Vector (With c o)->Normaliser
+initNorm::(WithObjs o)=>Vec.Vector o->Normaliser
 initNorm is = Norm mins $ zipWith (-) maxs mins
-  where n = dimesion . elem1 $ Vec.head is
-        maxs = flip map [0..n-1] $ \x->Vec.maximum $ Vec.map ((@!x) . elem1) is
-        mins = flip map [0..n-1] $ \x->Vec.minimum $ Vec.map ((@!x) . elem1) is
+  where n = dimesion . getObjs $ Vec.head is
+        maxs = flip map [0..n-1] $ \x->Vec.maximum $ Vec.map ((@!x) . getObjs) is
+        mins = flip map [0..n-1] $ \x->Vec.minimum $ Vec.map ((@!x) . getObjs) is
 
-norm::(Objectives o)=>Normaliser->With c o->[Double]
-norm nz i = zipWith3 (\x y z->(x-y)/z) (toList $ elem1 i) (_ms nz) (_ds nz)
+norm::(WithObjs o)=>Normaliser->o->[Double]
+norm nz i = zipWith3 (\x y z->(x-y)/z) (toList $ getObjs i) (_ms nz) (_ds nz)
 
 
 data MakespanCost = MC { makespan :: Double
                        , cost     :: Double}
+
+instance Show MakespanCost where
+  show a = showFFloat (Just 2) (makespan a) " " ++ showFFloat (Just 2) (cost a) ""
 
 instance Objectives MakespanCost where
   dimesion _ = 2
