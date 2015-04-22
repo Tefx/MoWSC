@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module EA.Selection ( rouletteSelGen
                     , tournamentSelGen) where
 
@@ -12,8 +14,7 @@ import           Data.Vector          ((!))
 import qualified Data.Vector          as Vec
 
 
-rouletteSelGen::(WithObjs o, Ord f, RandomGen g)=>
-                FitnessAssigner f o ->MutSelector g o
+rouletteSelGen::(Ord f)=>FitnessAssigner f->MutSelector
 rouletteSelGen fa pop = select
   where s = (1/) . foldl (\x y->x+1/fromIntegral y) 0 $ [1..Vec.length pop] :: Double
         ws = Vec.fromList . map ((s/) . fromIntegral) $ [1..Vec.length pop]
@@ -25,7 +26,7 @@ rouletteSelGen fa pop = select
                       then return $ pop ! i
                       else select
 
-tournamentSelGen::(WithObjs o, RandomGen g)=>MutSelector g o
+tournamentSelGen::MutSelector
 tournamentSelGen pop = do [l0, l1] <- uniRandPos 2 $ Vec.length pop
                           let i0 = pop ! l0
                               i1 = pop ! l1

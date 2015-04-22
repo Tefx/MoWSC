@@ -1,4 +1,6 @@
+{-# LANGUAGE RankNTypes   #-}
 {-# LANGUAGE TypeFamilies #-}
+
 
 module EA.Utils ( WithFitness, fitness
                 , FitnessAssigner
@@ -17,8 +19,8 @@ type WithFitness f o = With f o
 fitness::(Ord f)=>WithFitness f o->f
 fitness = attached
 
-type FitnessAssigner f o = Vec.Vector o->Vec.Vector (WithFitness f o)
+type FitnessAssigner f = (WithObjs o)=>Vec.Vector o->Vec.Vector (WithFitness f o)
 
 sortByFit::(WithObjs o, Ord f)=>
-           FitnessAssigner f o->Vec.Vector o->Vec.Vector o
+           FitnessAssigner f->Vec.Vector o->Vec.Vector o
 sortByFit fa = Vec.fromList . map original . sortBy (comparing fitness) . Vec.toList . fa

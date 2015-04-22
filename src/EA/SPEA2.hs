@@ -15,7 +15,7 @@ import qualified Data.Vector   as Vec
 
 type WithSPEA2Fit o = WithFitness SPEA2Fit o
 
-assignSPEA2Fit::(WithObjs o)=>FitnessAssigner SPEA2Fit o
+assignSPEA2Fit::FitnessAssigner SPEA2Fit
 assignSPEA2Fit is = let nz = initNorm is
                         rs = Vec.map (fromIntegral) . calRaw . calS $ is
                         k = round . sqrt . fromIntegral $ Vec.length is
@@ -23,7 +23,7 @@ assignSPEA2Fit is = let nz = initNorm is
                     in Vec.zipWith (\x y->attach x $ SPEA2Fit y) is $
                        Vec.zipWith (+) rs ds
 
-spea2Select::(WithObjs o)=>EnvSelector o
+spea2Select::EnvSelector
 spea2Select pop0 pop1 = let pop = (Vec.++) pop0 pop1
                             n = Vec.length pop0
                             popD = assignSPEA2Fit pop

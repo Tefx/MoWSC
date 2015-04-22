@@ -1,16 +1,17 @@
+{-# LANGUAGE RankNTypes   #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
           , normalBreeder
           , envSelectN
           , EAToolbox (..)
-          , EAConfig (..)
+          , EASetup (..)
           , evalEA
           , Individual (..)
           , Chromosome (..)) where
 
 import           Control.Monad        (join, replicateM)
-import           Control.Monad.Random (Rand, RandomGen, evalRand)
+import           Control.Monad.Random (Rand, RandomGen)
 import           Data.Function        (on)
 import           Data.Functor         ((<$>))
 import qualified Data.Vector          as Vec
@@ -21,22 +22,21 @@ import           Utils
 import           Utils.Random         (withProb)
 
 type Population o c = Vec.Vector (Individual o c)
-type MutSelector g o = Vec.Vector o->Rand g o
-type EnvSelector o = Vec.Vector o->Vec.Vector o->Vec.Vector o
-type Breeder g o c = Problem->EAConfig->
-                     MutSelector g (Individual o c)->
-                     Population o c->Rand g (Population o c)
-type PopInitialiser g = Problem->Int->Rand g (Vec.Vector Schedule)
+type MutSelector = (RandomGen g, WithObjs o)=>Vec.Vector o->Rand g o
+type EnvSelector = (WithObjs o)=>Vec.Vector o->Vec.Vector o->Vec.Vector o
+type Breeder = (RandomGen g, Chromosome c, Objectives o)=>Problem->
+               EASetup->MutSelector->Population o c->Rand g (Population o c)
+type PopInitialiser = (RandomGen g)=>Problem->Int->Rand g (Vec.Vector Schedule)
 
-data EAToolbox g o c = EAToolbox { popInit :: PopInitialiser g
-                                 , mutSel  :: MutSelector g (Individual o c)
-                                 , envSel  :: EnvSelector (Individual o c)
-                                 , breeder :: Breeder g o c}
+data EAToolbox = EAToolbox { popInit :: PopInitialiser
+                           , mutSel  :: MutSelector
+                           , envSel  :: EnvSelector
+                           , breeder :: Breeder}
 
-data EAConfig = EAConfig { numGen  :: Int
-                         , sizePop :: Int
-                         , probCrs :: Double
-                         , probMut :: Double}
+data EASetup = EASetup { numGen  :: Int
+                       , sizePop :: Int
+                       , probCrs :: Double
+                       , probMut :: Double}
 
 data Individual o c = Individual { chrm  :: c
                                  , _objs :: o}
@@ -58,16 +58,15 @@ class Chromosome a where
   repMode _ = (2, 1)
 
 evalEA::(Chromosome c, Objectives o, RandomGen g)=>
-        Problem->EAConfig->EAToolbox g o c->g->[Individual o c]
-evalEA p c (EAToolbox _init _mSel _eSel _br) g =
-  flip evalRand g $ do p0 <- Vec.map newInd <$> _init p (sizePop c)
-                       Vec.toList <$> foldM' doGen p0 [1..numGen c]
+        Problem->EASetup->EAToolbox->Rand g [Individual o c]
+evalEA p c (EAToolbox _init _mSel _eSel _br) = do p0 <- Vec.map newInd <$> _init p (sizePop c)
+                                                  Vec.toList <$> foldM' doGen p0 [1..numGen c]
   where doGen pop _ = _eSel pop <$> _br p c _mSel pop
         newInd i = let c = encode p i
                        o = fromList $ calObjs p i
                    in Individual c o
 
-normalBreeder::(Chromosome c, Objectives o, RandomGen g)=>Breeder g o c
+normalBreeder::Breeder
 normalBreeder p c sel is = Vec.fromList . concat <$>
                            (replicateM n $ replicateM nP s >>= reproduce p c)
   where (nP, nC) = repMode . chrm $ Vec.head is
@@ -75,7 +74,7 @@ normalBreeder p c sel is = Vec.fromList . concat <$>
         s = sel is
 
 reproduce::(Chromosome c, Objectives o, RandomGen g)=>
-           Problem->EAConfig->[Individual o c]->Rand g [Individual o c]
+           Problem->EASetup->[Individual o c]->Rand g [Individual o c]
 reproduce p c is = do cs' <- repChrm $ map chrm is
                       return . zipWith Individual cs' $
                         map (fromList . calObjs p . decode p) cs'
@@ -84,6 +83,6 @@ reproduce p c is = do cs' <- repChrm $ map chrm is
           pm <- withProb (probMut c) (mutate p) return
           px cs >>= mapM pm
 
-envSelectN::EnvSelector o->Int->Vec.Vector o->Vec.Vector o
+envSelectN::(WithObjs o)=>EnvSelector->Int->Vec.Vector o->Vec.Vector o
 envSelectN sel n s = let (s0, s1) = Vec.splitAt n s
                      in sel s0 s1

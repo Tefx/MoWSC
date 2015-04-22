@@ -1,9 +1,13 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RankNTypes         #-}
+
+
 
 module Main (main) where
 
-import           EA                            (EAConfig (..), EAToolbox (..),
-                                                evalEA, normalBreeder)
+import           EA                            (EASetup (..), EAToolbox (..),
+                                                Individual, evalEA,
+                                                normalBreeder)
 import           EA.Chromosome                 (C0, C2)
 import           EA.Init                       (randInsOrTypeOrHEFT, randPool)
 import           EA.NSGA2                      (nsga2Select)
@@ -19,7 +23,7 @@ import           Problem.DAG.Pegasus           as Pegasus
 import           Problem.DAG.Random            as RandDAG
 import           Problem.Service.EC2           as EC2
 
-import           Control.Monad.Random          (RandomGen)
+import           Control.Monad.Random          (Rand, RandomGen, evalRand)
 import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 def, help, name, summary, typ,
                                                 typFile, (&=))
@@ -57,28 +61,38 @@ process args = do
   s <- EC2.mkService $ limit args
   g <- newPureMT
   let p = Prob w s
-      ec = EAConfig { numGen = gen $ args
-                    , sizePop = popsize $ args
-                    , probCrs = pcr $ args
-                    , probMut = pmu $ args}
-      et0 = EAToolbox { popInit = randPool
-                      , mutSel = tournamentSelGen
-                      , envSel = nsga2Select
-                      , breeder = normalBreeder} :: (RandomGen g)=>EAToolbox g MakespanCost C0
-      et2 = EAToolbox { popInit = randInsOrTypeOrHEFT
-                      , mutSel = tournamentSelGen
-                      , envSel = spea2Select
-                      , breeder = normalBreeder} :: (RandomGen g)=>EAToolbox g MakespanCost C2
+      ec = EASetup { numGen = gen $ args
+                   , sizePop = popsize $ args
+                   , probCrs = pcr $ args
+                   , probMut = pmu $ args}
   case alg $ args of
    "heft"   -> mapM (putStrLn . showObjs p) [heft p]
    "cheap"  -> mapM (putStrLn . showObjs p) [cheap p]
    "hbcs"   -> mapM (putStrLn . showObjs p . hbcs p) $ tail [0,kstep $ args..1]
    "moheft" -> mapM (putStrLn . showObjs p) . moheft p $ popsize args
-   "ea0"    -> mapM (putStrLn . show . getObjs) $ evalEA p ec et0 g
-   "ea2"    -> mapM (putStrLn . show . getObjs) $ evalEA p ec et2 g
+   "ea0"    -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_C0 p ec
+   "ea2"    -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_C2 p ec
   return ()
 
 main = process =<< cmdArgs ea
+
+exp_EA_C0::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C0]
+exp_EA_C0 p c = evalEA p c $ EAToolbox { popInit = randPool
+                                       , mutSel = tournamentSelGen
+                                       , envSel = nsga2Select
+                                       , breeder = normalBreeder}
+
+exp_EA_C2::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C2]
+exp_EA_C2 p c = evalEA p c $ EAToolbox { popInit = randInsOrTypeOrHEFT
+                                       , mutSel = tournamentSelGen
+                                       , envSel = nsga2Select
+                                       , breeder = normalBreeder}
+
+
+
+
+
+
 
 
 

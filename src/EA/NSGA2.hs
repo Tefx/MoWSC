@@ -20,10 +20,10 @@ import qualified Data.Vector   as Vec
 
 type WithNSGA2Fit o = WithFitness NSGA2Fit o
 
-assignNSGA2Fit::(WithObjs o)=>FitnessAssigner NSGA2Fit o
+assignNSGA2Fit::FitnessAssigner NSGA2Fit
 assignNSGA2Fit = Vec.fromList . concat . map assignDis . assignFI
 
-nsga2Select::(WithObjs o)=>EnvSelector o
+nsga2Select::EnvSelector
 nsga2Select pop0 pop1 = Vec.take (Vec.length pop0) .
                         sortByFit assignNSGA2Fit $ (Vec.++) pop0 pop1
 

@@ -8,8 +8,6 @@ module MOP ( Objectives (..), WithObjs (..)
 import qualified Data.Vector as Vec
 import           Numeric     (showFFloat)
 
-import           Utils
-
 type ObjValue = Double
 
 class (Show a)=>Objectives a where
@@ -37,7 +35,6 @@ initNorm is = Norm mins $ zipWith (-) maxs mins
 
 norm::(WithObjs o)=>Normaliser->o->[Double]
 norm nz i = zipWith3 (\x y z->(x-y)/z) (toList $ getObjs i) (_ms nz) (_ds nz)
-
 
 data MakespanCost = MC { makespan :: Double
                        , cost     :: Double}
