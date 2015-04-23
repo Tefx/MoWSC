@@ -1,65 +1,66 @@
 #!/usr/bin/env python
 
-from itertools import product
+from config import exp_cmd, arg_tags, args_defaults, exp_defaults, experiments
+from config import dag_pegasus, dag_pegasus_path
+from config import db_addr, db_name
+
+from copy import deepcopy
+from time import time
 from gevent import subprocess
+from couchdb import Server as CouchDBServer, PreconditionFailed
 from gevent.pool import Pool
 from multiprocessing import cpu_count
-import json as json
-import couchdb
-from time import time
 
-from config import PEGASUS_DAGS, RANDAG, CouchDB_Addr, CONFIG, ALGS, DBNAME, EXP, DAG_PATH
+def gen_cmd(dag, name, conf):
+	ec = deepcopy(exp_defaults)
+	ac = deepcopy(args_defaults)
+	ec.update(conf)
+	ac.update(ec["args"])
+	ec["args"] = ac
+	args = " ".join([arg_tags[k] % v for k, v in ec["args"].iteritems()])
+	ec["args"]["algorithm"] = name
+	ec["args"]["dag"] = dag
+	cmd = "%s %s %s %s" % (exp_cmd, ec["cmd"], args, dag_pegasus_path % dag)
+	for _ in range(ec["times"]):
+		yield cmd, ec["args"]
 
-
-ARGS = {
-    "ind": "-i",
-    "seed": "-s",
-    "pcr": "-c",
-    "pmu": "-m",
-    "gennum": "-g",
-    "popsize": "-p",
-}
-
-
-def build_cmd(f):
-    return " ".join("%s %s" % (ARGS[k], v) for k, v in f.iteritems())
-
-
-def produce_exp(wpath):
-    path = DAG_PATH % wpath
-    ns, c = zip(*CONFIG.iteritems())
-    for i in list(product(*c)):
-        for alg in ALGS:
-            res = dict(zip(ns, i))
-            cmd = build_cmd(res)
-            res["alg"] = alg
-            res["dag"] = wpath
-            res["ga"] = True
-            cmd = "%s %s %s %s" % (EXP, alg, path, cmd)
-            yield res, cmd
+def run_exp(cmd, conf):
+	start = time()
+	print cmd
+	p = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+	(out, err) = p.communicate()
+	res = {
+		"results" : [map(float, x.strip().split()) for x in out.splitlines()],
+		"time"	  : time() - start,
+		}
+	res.update(conf)
+	db_save(res)
 
 def db_save(res):
-    server = couchdb.Server(CouchDB_Addr)
-    db = server[DBNAME]
+    server = CouchDBServer(db_addr)
+    db = server[db_name]
     db.save(res)
 
-def run_exp(exp):
-    res, cmd = exp
-    start = time()
-    print cmd
-    p = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
-    (out, err) = p.communicate()
-    res.update(json.loads(out))
-    res["time"] = time() - start
-    del res["pops"]
-    db_save(res)
-
+def init_db():
+    server = CouchDBServer(db_addr)
+    try:
+        server.create(db_name)
+    except PreconditionFailed:
+        del server[db_name]
+        server.create(db_name)
 
 if __name__ == '__main__':
-    p = Pool(cpu_count())
-    for _ in range(10):
-        for w in PEGASUS_DAGS:
-        # for w in RANDAG:
-            for e in produce_exp(w):
-                p.spawn(run_exp, e)
-    p.join()
+	from sys import argv
+
+	if len(argv) > 1:
+		if argv[1] == "initdb":
+			print "Initialising database.."
+			init_db()
+	else:
+		pool = Pool(cpu_count())
+		for dag in dag_pegasus:
+			for exp, conf in experiments.iteritems():
+				for cmd, conf in gen_cmd(dag, exp, conf):
+					pool.spawn(run_exp, cmd, conf)
+		pool.join()
+

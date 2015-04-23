@@ -19,7 +19,7 @@ import qualified Data.Vector          as Vec
 import           MOP                  (Objectives (..), WithObjs (..))
 import           Problem
 import           Utils
-import           Utils.Random         (withProb)
+import           Utils.Random         (doWithProb)
 
 type Population o c = Vec.Vector (Individual o c)
 type MutSelector = (RandomGen g, WithObjs o)=>Vec.Vector o->Rand g o
@@ -41,6 +41,9 @@ data EASetup = EASetup { numGen  :: Int
 data Individual o c = Individual { chrm  :: c
                                  , _objs :: o}
 
+instance (Objectives o)=>Show (Individual o c) where
+  show (Individual _ o) = show $ toList o
+
 instance (Objectives o)=>WithObjs (Individual o c) where
   type Objs (Individual o c) = o
   getObjs = _objs
@@ -59,19 +62,19 @@ class Chromosome a where
 
 evalEA::(Chromosome c, Objectives o, RandomGen g)=>
         Problem->EASetup->EAToolbox->Rand g [Individual o c]
-evalEA p c (EAToolbox _init _mSel _eSel _br) = do p0 <- Vec.map newInd <$> _init p (sizePop c)
-                                                  Vec.toList <$> foldM' doGen p0 [1..numGen c]
+evalEA p c (EAToolbox _init _mSel _eSel _br) = do
+  p0 <- Vec.map newInd <$> _init p (sizePop c)
+  Vec.toList <$> foldM' doGen p0 [1..numGen c]
   where doGen pop _ = _eSel pop <$> _br p c _mSel pop
         newInd i = let c = encode p i
                        o = fromList $ calObjs p i
                    in Individual c o
 
 normalBreeder::Breeder
-normalBreeder p c sel is = Vec.fromList . concat <$>
-                           (replicateM n $ replicateM nP s >>= reproduce p c)
+normalBreeder p c sel is =
+  Vec.fromList . concat <$> replicateM (div (sizePop c) nC) rp1
   where (nP, nC) = repMode . chrm $ Vec.head is
-        n = div (sizePop c) nC
-        s = sel is
+        rp1 = (replicateM nP $ sel is) >>= reproduce p c
 
 reproduce::(Chromosome c, Objectives o, RandomGen g)=>
            Problem->EASetup->[Individual o c]->Rand g [Individual o c]
@@ -79,9 +82,8 @@ reproduce p c is = do cs' <- repChrm $ map chrm is
                       return . zipWith Individual cs' $
                         map (fromList . calObjs p . decode p) cs'
   where repChrm cs = do
-          px <- withProb (probCrs c) (crossover p) return
-          pm <- withProb (probMut c) (mutate p) return
-          px cs >>= mapM pm
+          cs' <- join $ doWithProb (probCrs c) (crossover p) return cs
+          mapM (join . doWithProb (probMut c) (mutate p) return) cs'
 
 envSelectN::(WithObjs o)=>EnvSelector->Int->Vec.Vector o->Vec.Vector o
 envSelectN sel n s = let (s0, s1) = Vec.splitAt n s

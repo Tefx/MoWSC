@@ -5,7 +5,7 @@ module EA.Chromosome.C2 (C2) where
 import           EA                    (Chromosome (..))
 import           EA.Chromosome.Generic (mutateOrder)
 import           Problem
-import           Utils.Random          (randPos, randSplit, withProb)
+import           Utils.Random          (doWithProb, randPos, randSplit)
 
 import           Control.Monad         (join)
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
@@ -26,14 +26,13 @@ instance Chromosome C2 where
   repMode _ = (1, 1)
 
   mutate p i = do
-    is' <- return (_inss i)
-           >>= mutateMerge p (prob * 2)
-           >>= mutateSplit p prob (_order i)
-           >>= mutateType p prob
     o' <- mutateOrder p $ _order i
-    return $! i { _inss=is'
-                , _order=o'}
-    where prob = (1/) . fromIntegral . Vec.length . _inss $ i
+    is' <- return (_inss i)
+           >>= mutateSplit p prob o'
+           >>= mutateMerge p (prob * 2)
+           >>= mutateType p prob
+    return $ C2 o' is'
+    where prob = (1.0/) . fromIntegral . Vec.length . _inss $ i
 
   encode p (Schedule _o _t2i _i2t) = C2 _o is
     where is = foldl' (_insertTask _t2i)
@@ -77,17 +76,15 @@ mutateMerge _ prob is = do
 
 mutateSplit::RandomGen g=>Problem->
              Double->[Task]->Vector InsHost->Rand g (Vector InsHost)
-mutateSplit _ prob o is = Vec.foldl' (Vec.++) Vec.empty <$> Vec.mapM pf is
+mutateSplit _ prob o is = Vec.foldl' (Vec.++) Vec.empty <$>
+                          (flip Vec.mapM is $
+                           join . doWithProb prob f (return . Vec.singleton))
   where f i = Vec.fromList . splitHost o i <$> (randPos 2 . Set.size $ _tasks i)
-        pf x = do _f <- withProb prob f (return . Vec.singleton)
-                  _f x
 
 mutateType::RandomGen g=>Problem->
              Double->Vector InsHost->Rand g (Vector InsHost)
-mutateType p prob is = Vec.mapM f is
+mutateType p prob is = flip Vec.mapM is $ join . doWithProb prob f return
   where f i = updateType i <$> getRandomR (0, nType p-1)
-        pf x = do _f <- withProb prob f return
-                  _f x
 
 findIns::Vector InsHost->Task->Int
 findIns is t = fromJust $ Vec.findIndex (member t . _tasks) is

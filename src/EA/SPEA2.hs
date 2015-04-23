@@ -20,14 +20,14 @@ assignSPEA2Fit is = let nz = initNorm is
                         rs = Vec.map (fromIntegral) . calRaw . calS $ is
                         k = round . sqrt . fromIntegral $ Vec.length is
                         ds = Vec.map ((1/) . (+2) . (!!k)) $ calDs nz is
-                    in Vec.zipWith (\x y->attach x $ SPEA2Fit y) is $
+                    in Vec.zipWith attach is $
                        Vec.zipWith (+) rs ds
 
 spea2Select::EnvSelector
 spea2Select pop0 pop1 = let pop = (Vec.++) pop0 pop1
                             n = Vec.length pop0
                             popD = assignSPEA2Fit pop
-                            (p_, p) = Vec.unstablePartition nonDominated popD
+                            (p_, p) = Vec.unstablePartition ((<1) . fitness) popD
                         in case compare (Vec.length p_) n of
                             EQ -> Vec.map original p_
                             LT -> Vec.map original .
@@ -39,23 +39,18 @@ spea2Select pop0 pop1 = let pop = (Vec.++) pop0 pop1
 
 -- Non-export --
 
-newtype SPEA2Fit = SPEA2Fit {_fit :: Double} deriving (Eq)
-
-instance Ord SPEA2Fit where
-  compare = compare `on` _fit
-
-nonDominated::WithSPEA2Fit o->Bool
-nonDominated = (<1) . _fit . fitness
+type SPEA2Fit = Double
 
 
 -- assign Fitness --
 
 calS::(WithObjs o)=>Vec.Vector o->Vec.Vector (o, Int)
-calS pop = Vec.map (\x->(x,) . Vec.length $ Vec.filter ((<<<) (getObjs x) . getObjs) pop) pop
+calS pop = Vec.map (\x->(x,) . Vec.length $
+                        Vec.filter ((<<<) (getObjs x) . getObjs) pop) pop
 
 calRaw::(WithObjs o)=>Vec.Vector (o, Int)->Vec.Vector Int
 calRaw is = Vec.map (\(x, _)->Vec.sum . Vec.map snd $
-                              Vec.filter ((<<<) (getObjs x) . getObjs . fst) is) is
+                              Vec.filter ((<<< (getObjs x)) . getObjs . fst) is) is
 
 calDs::(WithObjs o)=>Normaliser->Vec.Vector o->Vec.Vector [Double]
 calDs nz is = Vec.map (\i->sort . Vec.toList $ Vec.map (eucInd i) is) is

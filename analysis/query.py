@@ -1,55 +1,34 @@
-#!/usr/bin/env python
-
 import json as json
 import couchdb
-from config import CONFIG, DBNAME, qCond, qOA, CouchDB_Addr
-
-fun_code = ('\n'
-            '\tdef valid(doc):\n'
-            '\t\tif doc["ga"]:\n'
-            '\t\t\tfor k,v in query.iteritems():\n'
-            '\t\t\t\tif doc[k] not in v:\n'
-            '\t\t\t\t\treturn False\n'
-            '\t\t\treturn True\n'
-            '\t\telif doc["alg"] in qOA:\n'
-            '\t\t\treturn True\n'
-            '\t\telse:\n'
-            '\t\t\treturn False\n'
-            '\n'
-            '\tif doc[\'dag\'] == dag and valid(doc):\n'
-            '\t\tyield None, doc')
+from config import db_addr, db_name
+from config import query_cond
 
 
-def build_fun(dag):
-    qc = '\tquery=%s' % json.dumps(qCond)
-    qoa = '\tqOA=%s' % json.dumps(qOA)
-    return 'def map_fun(doc):\n' \
-           '\tdag=\"%s\"\n%s\n%s' % (dag, qc, qoa) + fun_code
+def build_fun(dag, field):
+    fun_code = """
+def map_fun(doc):
+    conds = %s
+    dag = "%s"
 
+    def valid(doc, dag):
+        if doc["dag"] != dag:
+            return False
+        for k, v in conds.iteritems():
+            if doc[k] not in v:
+                return False
+            else:
+                return True
 
-def query(dag, q):
-    db = couchdb.Server(CouchDB_Addr)[DBNAME]
-    rs = []
-    for res in db.query(build_fun(dag), language='python'):
-        d = res.value
-        rs.append((format_doc(d, q), d))
-    return rs
+    if valid(doc, dag):
+        yield doc["algorithm"], doc["%s"]
+"""
+    return fun_code % (json.dumps(query_cond), dag, field)
 
-
-def format_doc(d, q):
-    if not d["ga"]:
-        return d["alg"]
-    fs = []
-    for k, v in CONFIG.iteritems():
-        if k not in q and len(v) > 1:
-            fs.append(k)
-        elif len(q[k]) > 1:
-            fs.append(k)
-    ks = [d["alg"]] + ["%s-%s" % (k, d[k]) for k in fs]
-    return "_".join(ks)
-
+def query(dag, field):
+    db = couchdb.Server(db_addr)[db_name]
+    for res in db.query(build_fun(dag, field), language='python'):
+        yield res.key, res.value
 
 if __name__ == '__main__':
-    from config import qCond
-    for r in query("Montage_25", qCond):
-        print r
+    for k,v in query("CyberShake_30", "results"):
+        print k

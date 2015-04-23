@@ -20,7 +20,7 @@ class (Show a)=>Objectives a where
   dimesion = length . toList
   toList a = map (a@!) [0..dimesion a-1]
 
-class (Objectives (Objs a))=>WithObjs a where
+class (Show a, Objectives (Objs a))=>WithObjs a where
   type Objs a:: *
   getObjs::a->Objs a
 

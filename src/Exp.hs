@@ -8,7 +8,7 @@ module Main (main) where
 import           EA                            (EASetup (..), EAToolbox (..),
                                                 Individual, evalEA,
                                                 normalBreeder)
-import           EA.Chromosome                 (C0, C2)
+import           EA.Chromosome                 (C0, C1, C2)
 import           EA.Init                       (randInsOrTypeOrHEFT, randPool)
 import           EA.NSGA2                      (nsga2Select)
 import           EA.Selection                  (tournamentSelGen)
@@ -31,7 +31,6 @@ import           System.Random.Mersenne.Pure64 (PureMT, newPureMT)
 
 data Exp = Exp { alg     :: String
                , limit   :: Int
-               , kstep   :: Double
                , popsize :: Int
                , gen     :: Int
                , pcr     :: Double
@@ -42,8 +41,6 @@ ea::Exp
 ea = Exp { alg = "heft" &= argPos 0 &= typ "ALG"
          , limit = 10000 &=name "l" &= typ "MAX_INSTANCES"
                    &= help "Max instance limit."
-         , kstep = 0.1 &= name "k" &= typ "NUM"
-                   &= help "Execution number for heuristic."
          , popsize = 50 &= name "p" &= typ "NUM"
                      &= help "Size of Population."
          , gen = 1000 &= name "g" &= typ "NUM"
@@ -66,27 +63,49 @@ process args = do
                    , probCrs = pcr $ args
                    , probMut = pmu $ args}
   case alg $ args of
-   "heft"   -> mapM (putStrLn . showObjs p) [heft p]
-   "cheap"  -> mapM (putStrLn . showObjs p) [cheap p]
-   "hbcs"   -> mapM (putStrLn . showObjs p . hbcs p) $ tail [0,kstep $ args..1]
-   "moheft" -> mapM (putStrLn . showObjs p) . moheft p $ popsize args
-   "ea0"    -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_C0 p ec
-   "ea2"    -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_C2 p ec
+   "heft"     -> mapM (putStrLn . showObjs p) [heft p]
+   "cheap"    -> mapM (putStrLn . showObjs p) [cheap p]
+   "hbcs"     -> let kstep = (1.0/) . fromIntegral $ popsize args - 1
+                 in mapM (putStrLn . showObjs p . hbcs p) $ tail [0, kstep..1]
+   "moheft"   -> mapM (putStrLn . showObjs p) . moheft p $ popsize args
+   "nsga2_c0" -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_NSGA2_C0 p ec
+   "nsga2_c2" -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_NSGA2_C2 p ec
+   "spea2_c0" -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_SPEA2_C0 p ec
+   "spea2_c1" -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_SPEA2_C1 p ec
+   "spea2_c2" -> mapM (putStrLn . show . getObjs) . flip evalRand g $ exp_EA_SPEA2_C2 p ec
   return ()
 
 main = process =<< cmdArgs ea
 
-exp_EA_C0::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C0]
-exp_EA_C0 p c = evalEA p c $ EAToolbox { popInit = randPool
-                                       , mutSel = tournamentSelGen
-                                       , envSel = nsga2Select
-                                       , breeder = normalBreeder}
+exp_EA_NSGA2_C0::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C0]
+exp_EA_NSGA2_C0 p c = evalEA p c $ EAToolbox { popInit = randPool
+                                             , mutSel = tournamentSelGen
+                                             , envSel = nsga2Select
+                                             , breeder = normalBreeder}
 
-exp_EA_C2::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C2]
-exp_EA_C2 p c = evalEA p c $ EAToolbox { popInit = randInsOrTypeOrHEFT
-                                       , mutSel = tournamentSelGen
-                                       , envSel = nsga2Select
-                                       , breeder = normalBreeder}
+exp_EA_NSGA2_C2::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C2]
+exp_EA_NSGA2_C2 p c = evalEA p c $ EAToolbox { popInit = randInsOrTypeOrHEFT
+                                             , mutSel = tournamentSelGen
+                                             , envSel = nsga2Select
+                                             , breeder = normalBreeder}
+
+exp_EA_SPEA2_C0::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C0]
+exp_EA_SPEA2_C0 p c = evalEA p c $ EAToolbox { popInit = randPool
+                                             , mutSel = tournamentSelGen
+                                             , envSel = spea2Select
+                                             , breeder = normalBreeder}
+
+exp_EA_SPEA2_C1::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C1]
+exp_EA_SPEA2_C1 p c = evalEA p c $ EAToolbox { popInit = randPool
+                                             , mutSel = tournamentSelGen
+                                             , envSel = spea2Select
+                                             , breeder = normalBreeder}
+
+exp_EA_SPEA2_C2::(RandomGen g)=>Problem->EASetup->Rand g [Individual MakespanCost C2]
+exp_EA_SPEA2_C2 p c = evalEA p c $ EAToolbox { popInit = randInsOrTypeOrHEFT
+                                             , mutSel = tournamentSelGen
+                                             , envSel = spea2Select
+                                             , breeder = normalBreeder}
 
 
 

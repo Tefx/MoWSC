@@ -22,6 +22,9 @@ instance WithObjs (CPartial pl) where
   type Objs (CPartial pl) = MakespanCost
   getObjs p = fromList $ [_ct p, _cc p]
 
+instance Show (CPartial pl) where
+  show = show . toList. getObjs
+
 instance PartialSchedule CPartial where
   locations = _locations
   finishTimes = _finishTimes
