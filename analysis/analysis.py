@@ -34,13 +34,13 @@ def best_hvs(dag):
 	d, nz = fetch(dag, "results")
 	for k, v in d.iteritems():
 		d[k] = max(hv.compute(map(nz, x)) for x in v)
-	return d
+	return dag, d
 
 def best_time(dag):
 	d, _ = fetch(dag, "time")
 	for k, v in d.iteritems():
 		d[k] = min(v)
-	return d
+	return dag, d
 
 def beDom(x, y):
     if x[0] < y[0]:
@@ -49,7 +49,7 @@ def beDom(x, y):
         return x[1] < y[1]
     else:
         return False
-        
+
 def nonDom(x, xs):
     return not any([beDom(x, y) for y in xs])
 
@@ -86,7 +86,7 @@ if __name__ == '__main__':
 	elif argv[1] == "hv":
 		for dag in dag_pegasus:
 			print best_hvs(dag)
-	elif argv[1] == "fronts":
+	elif argv[1] == "plot":
 		for dag in dag_pegasus:
 			plot_front(front_objs(dag), dag)
 

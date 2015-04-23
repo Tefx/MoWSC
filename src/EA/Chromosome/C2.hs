@@ -26,13 +26,16 @@ instance Chromosome C2 where
   repMode _ = (1, 1)
 
   mutate p i = do
+    let prob = (1.0/) . fromIntegral . Vec.length . _inss $ i
+    is0 <- doWithProb 0.5 (mutateSplit p prob (_order i)) (mutateMerge p prob) $
+           _inss i
+    is' <- is0 >>= mutateType p prob
+    -- is' <- return (_inss i)
+    --        >>= mutateSplit p prob (_order i)
+    --        >>= mutateMerge p prob
+    --        >>= mutateType p prob
     o' <- mutateOrder p $ _order i
-    is' <- return (_inss i)
-           >>= mutateSplit p prob o'
-           >>= mutateMerge p (prob * 2)
-           >>= mutateType p prob
     return $ C2 o' is'
-    where prob = (1.0/) . fromIntegral . Vec.length . _inss $ i
 
   encode p (Schedule _o _t2i _i2t) = C2 _o is
     where is = foldl' (_insertTask _t2i)
@@ -49,8 +52,8 @@ data InsHost = IHost { _type  :: InsType
                      , _tasks :: Set Task}
 
 mergeHosts::Vector InsHost->InsHost
-mergeHosts is = IHost t . Vec.foldl' union Set.empty . Vec.map _tasks $ is
-  where t = _type $ Vec.maximumBy (comparing $ Set.size . _tasks) is
+mergeHosts is = let t = _type $ Vec.maximumBy (comparing $ Set.size . _tasks) is
+                in IHost t . Vec.foldl' union Set.empty . Vec.map _tasks $ is
 
 splitHost::[Task]->InsHost->[Int]->[InsHost]
 splitHost o i@(IHost t ts) [p0, p1]
@@ -70,21 +73,21 @@ insertTask t (IHost _t _s) = IHost _t $ insert t _s
 
 mutateMerge::RandomGen g=>Problem->
              Double->Vector InsHost->Rand g (Vector InsHost)
-mutateMerge _ prob is = do
-  (m, r) <- randSplit prob is
-  return . Vec.snoc r $ mergeHosts m
+mutateMerge _ prob is = do (m, r) <- randSplit (prob * 2) is
+                           return . Vec.snoc r $ mergeHosts m
 
 mutateSplit::RandomGen g=>Problem->
              Double->[Task]->Vector InsHost->Rand g (Vector InsHost)
-mutateSplit _ prob o is = Vec.foldl' (Vec.++) Vec.empty <$>
-                          (flip Vec.mapM is $
-                           join . doWithProb prob f (return . Vec.singleton))
-  where f i = Vec.fromList . splitHost o i <$> (randPos 2 . Set.size $ _tasks i)
+mutateSplit _ prob o is =
+  let f i = Vec.fromList . splitHost o i <$> (randPos 2 . Set.size $ _tasks i)
+  in Vec.foldl' (Vec.++) Vec.empty <$>
+     (flip Vec.mapM is $
+      join . doWithProb prob f (return . Vec.singleton))
 
 mutateType::RandomGen g=>Problem->
              Double->Vector InsHost->Rand g (Vector InsHost)
-mutateType p prob is = flip Vec.mapM is $ join . doWithProb prob f return
-  where f i = updateType i <$> getRandomR (0, nType p-1)
+mutateType p prob is = let f i = updateType i <$> getRandomR (0, nType p-1)
+                       in flip Vec.mapM is $ join . doWithProb prob f return
 
 findIns::Vector InsHost->Task->Int
 findIns is t = fromJust $ Vec.findIndex (member t . _tasks) is
@@ -102,5 +105,5 @@ crossoverIns p o (is0, is1) = do
   return $ (Vec.++) sub_is0 sub_is1
 
 _insertTask::Vector Ins->Vector InsHost->Task->Vector InsHost
-_insertTask _t2i is t = is // [(i, insertTask t $ is ! i)]
-  where i = _t2i ! t
+_insertTask _t2i is t = let i = _t2i ! t
+                        in is // [(i, insertTask t $ is ! i)]

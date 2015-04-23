@@ -42,7 +42,7 @@ data Individual o c = Individual { chrm  :: c
                                  , _objs :: o}
 
 instance (Objectives o)=>Show (Individual o c) where
-  show (Individual _ o) = show $ toList o
+  show x = "(" ++ (show $ _objs x) ++ ")"
 
 instance (Objectives o)=>WithObjs (Individual o c) where
   type Objs (Individual o c) = o
@@ -62,28 +62,29 @@ class Chromosome a where
 
 evalEA::(Chromosome c, Objectives o, RandomGen g)=>
         Problem->EASetup->EAToolbox->Rand g [Individual o c]
-evalEA p c (EAToolbox _init _mSel _eSel _br) = do
-  p0 <- Vec.map newInd <$> _init p (sizePop c)
-  Vec.toList <$> foldM' doGen p0 [1..numGen c]
-  where doGen pop _ = _eSel pop <$> _br p c _mSel pop
-        newInd i = let c = encode p i
-                       o = fromList $ calObjs p i
-                   in Individual c o
+evalEA p c (EAToolbox _init _mSel _eSel _br) =
+  let doGen pop _ = _eSel pop <$> _br p c _mSel pop
+      newInd i = let c = encode p i
+                     o = fromList $ calObjs p i
+                 in Individual c o
+  in do p0 <- Vec.map newInd <$> _init p (sizePop c)
+        Vec.toList <$> foldM' doGen p0 [1..numGen c]
 
 normalBreeder::Breeder
 normalBreeder p c sel is =
-  Vec.fromList . concat <$> replicateM (div (sizePop c) nC) rp1
-  where (nP, nC) = repMode . chrm $ Vec.head is
-        rp1 = (replicateM nP $ sel is) >>= reproduce p c
+  let (nP, nC) = repMode . chrm $ Vec.head is
+      rp1 = (replicateM nP $ sel is) >>= reproduce p c
+  in Vec.fromList . concat <$> replicateM (div (sizePop c) nC) rp1
 
 reproduce::(Chromosome c, Objectives o, RandomGen g)=>
            Problem->EASetup->[Individual o c]->Rand g [Individual o c]
-reproduce p c is = do cs' <- repChrm $ map chrm is
-                      return . zipWith Individual cs' $
-                        map (fromList . calObjs p . decode p) cs'
-  where repChrm cs = do
-          cs' <- join $ doWithProb (probCrs c) (crossover p) return cs
-          mapM (join . doWithProb (probMut c) (mutate p) return) cs'
+reproduce p c is =
+  let repChrm cs = do
+        cs' <- join $ doWithProb (probCrs c) (crossover p) return cs
+        mapM (join . doWithProb (probMut c) (mutate p) return) cs'
+  in do cs' <- repChrm $ map chrm is
+        return . zipWith Individual cs' $
+          map (fromList . calObjs p . decode p) cs'
 
 envSelectN::(WithObjs o)=>EnvSelector->Int->Vec.Vector o->Vec.Vector o
 envSelectN sel n s = let (s0, s1) = Vec.splitAt n s

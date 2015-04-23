@@ -52,9 +52,11 @@ calRaw::(WithObjs o)=>Vec.Vector (o, Int)->Vec.Vector Int
 calRaw is = Vec.map (\(x, _)->Vec.sum . Vec.map snd $
                               Vec.filter ((<<< (getObjs x)) . getObjs . fst) is) is
 
+eucInd::(WithObjs o)=>Normaliser->o->o->Double
+eucInd nz = euclideanDis `on` (norm nz)
+
 calDs::(WithObjs o)=>Normaliser->Vec.Vector o->Vec.Vector [Double]
-calDs nz is = Vec.map (\i->sort . Vec.toList $ Vec.map (eucInd i) is) is
-  where eucInd = euclideanDis `on` (norm nz)
+calDs nz is = Vec.map (\i->sort . Vec.toList $ Vec.map ((eucInd nz) i) is) is
 
 -- select --
 
@@ -70,3 +72,5 @@ trunc nz n pop
   | otherwise = let pd = Vec.zipWith (,) pop $ calDs nz pop
                     r = Vec.minIndexBy compareByKD pd
                 in trunc nz n $ Vec.ifilter (\i _->i /= r) pop
+
+--trunc'::(WithObjs o)=>Normaliser->Int->Vec.Vector [Double]->Vec.Vectir o->Vec.Vector o

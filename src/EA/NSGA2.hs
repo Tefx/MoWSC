@@ -1,5 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
-
 module EA.NSGA2 (WithNSGA2Fit, assignNSGA2Fit, nsga2Select) where
 
 import           EA            (EnvSelector)
@@ -14,7 +12,6 @@ import           Data.List     (foldl', partition, sortBy)
 import           Data.Ord      (comparing)
 import           Data.Vector   ((!))
 import qualified Data.Vector   as Vec
-
 
 -- Export --
 
@@ -45,8 +42,8 @@ instance Ord NSGA2Fit where
 -- FastDominanteSort related --
 
 assignFI::(WithObjs o)=>Vec.Vector o->[[WithNSGA2Fit o]]
-assignFI ms = zipWith (\x s->map (initNSGA2Fit x) s) [0..] $ _fastNDSort ms
-  where initNSGA2Fit i a = attach a $ NSGA2Fit i 0
+assignFI ms = zipWith (\x s->map (initFit x) s) [0..] $ _fastNDSort ms
+  where initFit i a = attach a $ NSGA2Fit i 0
 
 _fastNDSort::(WithObjs o)=>Vec.Vector o ->[[o]]
 _fastNDSort pop = map (map (pop!)) . reverse . fst $ _allFS ds []
@@ -54,8 +51,8 @@ _fastNDSort pop = map (map (pop!)) . reverse . fst $ _allFS ds []
         ds = zip [0..] . map (_dominatedSet popl) $ popl
 
 _allFS::[(Int, IntSet.IntSet)]->[[Int]]->([[Int]], [(Int, IntSet.IntSet)])
-_allFS [] !rs = (rs, [])
-_allFS !ss !rs = let (nr, ss') = _nextF ss
+_allFS [] rs = (rs, [])
+_allFS ss rs = let (nr, ss') = _nextF ss
                  in _allFS ss' (nr:rs)
 
 _dominatedSet::(Objectives o)=>[o]->o->IntSet.IntSet
@@ -67,8 +64,8 @@ _nextF s = (,) is $ map (_removeINS is) s1
         is = map fst s0
 
 _removeINS::[Int]->(Int, IntSet.IntSet)->(Int, IntSet.IntSet)
-_removeINS [] !s = s
-_removeINS !(x:xs) !(s0, s1) = _removeINS xs (s0, IntSet.delete x s1)
+_removeINS [] s = s
+_removeINS (x:xs) (s0, s1) = _removeINS xs (s0, IntSet.delete x s1)
 
 
 -- Crowd Distances related --

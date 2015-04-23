@@ -2,7 +2,7 @@
 
 module Utils.Random  ( doWithProb
                      , randPos, uniRandPos
-                     , chooseWithP, choose
+                     , chooseWithP, chooseWithP2, choose
                      , randSplit) where
 
 import           Control.Monad.Random
@@ -27,13 +27,21 @@ uniRandPos n m = posl [] n
 randPos::(RandomGen g)=>Int->Int->Rand g [Int]
 randPos n m = sort <$> (replicateM n $ getRandomR (0, m-1))
 
-chooseWithP::(RandomGen g)=>Double->a->a->Rand g a
-chooseWithP p a b = do
+chooseWithP::(RandomGen g)=>[Double]->[a]->Rand g a
+chooseWithP ps as = _findP ps as <$> getRandomR (0, 1)
+
+_findP::[Double]->[a]->Double->a
+_findP (p:ps) (a:as) r
+  | r <= 0 = a
+  | otherwise = _findP ps as $ r-p
+
+chooseWithP2::(RandomGen g)=>Double->a->a->Rand g a
+chooseWithP2 p a b = do
   r <- getRandomR (0, 1)
   return $ if r <= p then a else b
 
 choose::(RandomGen g)=>a->a->Rand g a
-choose a b = chooseWithP 0.5 a b
+choose a b = chooseWithP2 0.5 a b
 
 randSplit::RandomGen g=>Double->Vec.Vector a->Rand g (Vec.Vector a, Vec.Vector a)
 randSplit p vs = do

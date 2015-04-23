@@ -159,9 +159,10 @@ data SimState s = SS { _aft  :: MVec.STVector s Time
                      , _insf :: MVec.STVector s Time}
 
 astTask::Problem->Schedule->SimState st->Task->ST st Time
-astTask p s ss task = do lst <- MVec.unsafeRead (_insf ss) . flip task2ins task $ s
-                         maximum . (lst:) <$> (mapM f $ preds p task)
-  where f tp = (commtime p s tp task +) <$> MVec.unsafeRead (_aft ss) tp
+astTask p s ss task =
+  let f tp = (commtime p s tp task +) <$> MVec.unsafeRead (_aft ss) tp
+  in do lst <- MVec.unsafeRead (_insf ss) . flip task2ins task $ s
+        maximum . (lst:) <$> (mapM f $ preds p task)
 
 scheduleTask::Problem->Schedule->SimState st->Task->ST st ()
 scheduleTask p s ss task = do st <- astTask p s ss task

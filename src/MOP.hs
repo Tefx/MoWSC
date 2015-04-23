@@ -24,11 +24,12 @@ class (Show a, Objectives (Objs a))=>WithObjs a where
   type Objs a:: *
   getObjs::a->Objs a
 
-data Normaliser = Norm { _ms :: [Double]
-                       , _ds :: [Double]}
+data Normaliser = Norm { _dim ::Int
+                       , _ms  :: [Double]
+                       , _ds  :: [Double]}
 
 initNorm::(WithObjs o)=>Vec.Vector o->Normaliser
-initNorm is = Norm mins $ zipWith (-) maxs mins
+initNorm is = Norm n mins $ zipWith (-) maxs mins
   where n = dimesion . getObjs $ Vec.head is
         maxs = flip map [0..n-1] $ \x->Vec.maximum $ Vec.map ((@!x) . getObjs) is
         mins = flip map [0..n-1] $ \x->Vec.minimum $ Vec.map ((@!x) . getObjs) is
