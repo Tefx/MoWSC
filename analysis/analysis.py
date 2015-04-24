@@ -9,11 +9,11 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-def fetch(dag, field):
+def fetch(dag, keys, field):
 	d = {}
 	nz = Normaliser()
 
-	for k, v in query(dag, field):
+	for k, v in query(dag, keys, field):
 		if k not in d:
 			d[k] = [v]
 		else:
@@ -22,22 +22,22 @@ def fetch(dag, field):
 			nz.update(v)
 	return d, nz
 
-def front_objs(dag):
+def front_objs(dag, keys):
 	hv = HyperVolume(hv_ref)
-	d, nz = fetch(dag, "results")
+	d, nz = fetch(dag, keys, "results")
 	for k, v in d.iteritems():
 		d[k] = max(v, key=lambda x: hv.compute(map(nz, x)))
 	return d
 
-def best_hvs(dag):
+def best_hvs(dag, keys):
 	hv = HyperVolume(hv_ref)
-	d, nz = fetch(dag, "results")
+	d, nz = fetch(dag, keys, "results")
 	for k, v in d.iteritems():
 		d[k] = max(hv.compute(map(nz, x)) for x in v)
 	return dag, d
 
-def best_time(dag):
-	d, _ = fetch(dag, "time")
+def best_time(dag, keys):
+	d, _ = fetch(dag, keys, "time")
 	for k, v in d.iteritems():
 		d[k] = min(v)
 	return dag, d
@@ -80,14 +80,15 @@ def plot_front(d, save=None):
 
 if __name__ == '__main__':
 	from sys import argv
+	keys = ["algorithm", "pop_size"]
 	if argv[1] == "time":
 		for dag in dag_pegasus:
-			print best_time(dag)
+			print best_time(dag, keys)
 	elif argv[1] == "hv":
 		for dag in dag_pegasus:
-			print best_hvs(dag)
+			print best_hvs(dag, keys)
 	elif argv[1] == "plot":
 		for dag in dag_pegasus:
-			plot_front(front_objs(dag), dag)
+			plot_front(front_objs(dag, keys), dag)
 
 

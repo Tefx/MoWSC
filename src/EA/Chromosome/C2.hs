@@ -5,7 +5,8 @@ module EA.Chromosome.C2 (C2) where
 import           EA                    (Chromosome (..))
 import           EA.Chromosome.Generic (mutateOrder)
 import           Problem
-import           Utils.Random          (doWithProb, randPos, randSplit)
+import           Utils.Random          (chooseWithP, doWithProb, randPos,
+                                        randSplit)
 
 import           Control.Monad         (join)
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
@@ -27,13 +28,13 @@ instance Chromosome C2 where
 
   mutate p i = do
     let prob = (1.0/) . fromIntegral . Vec.length . _inss $ i
-    is0 <- doWithProb 0.5 (mutateSplit p prob (_order i)) (mutateMerge p prob) $
-           _inss i
-    is' <- is0 >>= mutateType p prob
-    -- is' <- return (_inss i)
-    --        >>= mutateSplit p prob (_order i)
-    --        >>= mutateMerge p prob
-    --        >>= mutateType p prob
+    f <- chooseWithP [0.25, 0.25, 0.5] [ mutateSplit p prob (_order i)
+                                       , mutateMerge p prob
+                                       , mutateType p prob]
+    is' <- f $ _inss i
+    -- is0 <- doWithProb 0.5 (mutateSplit p prob (_order i)) (mutateMerge p prob) $
+    --        _inss i
+    -- is' <- is0 >>= mutateType p prob
     o' <- mutateOrder p $ _order i
     return $ C2 o' is'
 

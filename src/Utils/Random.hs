@@ -32,7 +32,7 @@ chooseWithP ps as = _findP ps as <$> getRandomR (0, 1)
 
 _findP::[Double]->[a]->Double->a
 _findP (p:ps) (a:as) r
-  | r <= 0 = a
+  | r <= p = a
   | otherwise = _findP ps as $ r-p
 
 chooseWithP2::(RandomGen g)=>Double->a->a->Rand g a

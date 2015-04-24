@@ -4,7 +4,7 @@ from config import db_addr, db_name
 from config import query_cond
 
 
-def build_fun(dag, field):
+def build_fun(dag, keys, field):
     fun_code = """
 def map_fun(doc):
     conds = %s
@@ -16,19 +16,20 @@ def map_fun(doc):
         for k, v in conds.iteritems():
             if doc[k] not in v:
                 return False
-            else:
-                return True
+        return True
 
     if valid(doc, dag):
-        yield doc["algorithm"], doc["%s"]
+        yield "-".join(%s), doc["%s"]
 """
-    return fun_code % (json.dumps(query_cond), dag, field)
+    ks =  "[%s]" % ",".join(["str(doc[\"%s\"])" % k for k in keys])
 
-def query(dag, field):
+    return fun_code % (json.dumps(query_cond), dag, ks, field)
+
+def query(dag, keys, field):
     db = couchdb.Server(db_addr)[db_name]
-    for res in db.query(build_fun(dag, field), language='python'):
+    for res in db.query(build_fun(dag, keys, field), language='python'):
         yield res.key, res.value
 
 if __name__ == '__main__':
-    for k,v in query("CyberShake_30", "results"):
+    for k,v in query("CyberShake_30", ["algorithm", "gen_num"], "results"):
         print k

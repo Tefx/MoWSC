@@ -8,8 +8,8 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 50,
-	"gen_num" 	: 1000,
+	"pop_size"	: 10,
+	"gen_num" 	: 5000,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
@@ -35,17 +35,17 @@ experiments = {
 	# "NSGA2-C1"	:{
 	# 	"cmd" 	: "nsga2_c1",
 	# },
-	# "NSGA2-C2"	:{
-	# 	"cmd" 	: "nsga2_c2",
+	"NSGA2-C2"	:{
+		"cmd" 	: "nsga2_c2",
+	},
+	# "MOHEFT"	:{
+	# 	"times" : 1,
+	# 	"cmd"	: "moheft",
 	# },
-	"MOHEFT"	:{
-		"times" : 1,
-		"cmd"	: "moheft",
-	},
-	"HBCS" 		:{
-		"times"	: 1,
-		"cmd"	: "hbcs",
-	},
+	# "HBCS" 		:{
+	# 	"times"	: 1,
+	# 	"cmd"	: "hbcs",
+	# },
 	# "HEFT" 		:{
 	# 	"times"	: 1,
 	# 	"cmd"	: "heft",
@@ -60,15 +60,15 @@ dag_pegasus = [
 	# "Montage_25",
 	# "Montage_50",
 	# "Montage_100",
-	# # "Montage_1000",
+	# "Montage_1000",
 	# "Epigenomics_24",
 	# "Epigenomics_46",
 	# "Epigenomics_100",
-	# # "Epigenomics_997_fixed",
-	"CyberShake_30",
+	# "Epigenomics_997_fixed",
+	# "CyberShake_30",
 	# "CyberShake_50",
-	"CyberShake_100",
-	# "CyberShake_1000",
+	# "CyberShake_100",
+	"CyberShake_1000",
 	# "Sipht_30",
 	# "Sipht_60",
 	# "Sipht_100",
@@ -76,7 +76,7 @@ dag_pegasus = [
 	# "Inspiral_30",
 	# "Inspiral_50",
 	# "Inspiral_100",
-	# # "Inspiral_1000",
+	# "Inspiral_1000",
 ]
 
 ## Database
@@ -86,9 +86,8 @@ db_name = "hookie-exp-test"
 ## Query
 
 query_cond = {
-	"algorithm"	: ["MOHEFT", "SPEA2-C1", "SPEA2-C2", "NSGA2-C1", "SPEA2-C0"],
-	"pop_size" 	: [50],
-	"gen_num"	: [1000],
+	"algorithm"	: ["MOHEFT", "SPEA2-C1", "SPEA2-C2", "NSGA2-C2", "SPEA2-C0"],
+	"pop_size" 	: [10, 25, 50],
 }
 
 ## Hypervolume

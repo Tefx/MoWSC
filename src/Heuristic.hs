@@ -1,6 +1,7 @@
 module Heuristic ( PartialSchedule (..)
                  , Pool (..), InfinityPool, FullPool
-                 , timeComm, timeComp) where
+                 , timeComm, timeComp
+                 , getOrder) where
 
 import Problem
 import Data.Vector (Vector, (!), (//))
