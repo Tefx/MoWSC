@@ -43,7 +43,7 @@ instance Ord NSGA2Fit where
 
 assignFI::(WithObjs o)=>Vec.Vector o->[[WithNSGA2Fit o]]
 assignFI ms = zipWith (\x s->map (initFit x) s) [0..] $ _fastNDSort ms
-  where initFit i a = attach a $ NSGA2Fit i 0
+  where initFit i a = attach (NSGA2Fit i 0) a
 
 _fastNDSort::(WithObjs o)=>Vec.Vector o ->[[o]]
 _fastNDSort pop = map (map (pop!)) . reverse . fst $ _allFS ds []
@@ -79,6 +79,6 @@ _dis1 ms i = zipWith _update ms' . _disL . map ((@!i) . getObjs . original) $ ms
   where ms' = sortBy (comparing $ (@!i) . getObjs . original) ms
         _inf = 1e42
         _update x v = let NSGA2Fit i c = fitness x
-                      in attach (original x) . NSGA2Fit i $ c+v
+                      in attach (NSGA2Fit i $ c+v) $ original x
         _disL v = zipWith (\x y->(x-y)/(last v - head v))
                   (tail v ++ [_inf]) ((0-_inf):v)

@@ -24,7 +24,7 @@ class (Show a, Objectives (Objs a))=>WithObjs a where
   type Objs a:: *
   getObjs::a->Objs a
 
-data Normaliser = Norm { _dim ::Int
+data Normaliser = Norm { _dim :: Int
                        , _ms  :: [Double]
                        , _ds  :: [Double]}
 
@@ -35,7 +35,8 @@ initNorm is = Norm n mins $ zipWith (-) maxs mins
         mins = flip map [0..n-1] $ \x->Vec.minimum $ Vec.map ((@!x) . getObjs) is
 
 norm::(WithObjs o)=>Normaliser->o->[Double]
-norm nz i = zipWith3 (\x y z->(x-y)/z) (toList $ getObjs i) (_ms nz) (_ds nz)
+norm nz i = let _norm x y z = (x-y)/z
+            in zipWith3 _norm (toList $ getObjs i) (_ms nz) (_ds nz)
 
 data MakespanCost = MC { makespan :: Double
                        , cost     :: Double}

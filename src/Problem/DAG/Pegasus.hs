@@ -1,23 +1,23 @@
 module Problem.DAG.Pegasus (Pegasus, mkWorkflow) where
 
-import Problem
+import           Problem
 
-import Text.XML.HXT.Core
-import Text.HandsomeSoup (css)
-import Data.List
-import Data.Function
-import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
-import Data.Vector ((!))
-import qualified Data.Vector as Vec
+import           Data.Function
+import           Data.List
+import qualified Data.Map.Strict   as Map
+import qualified Data.Set          as Set
+import           Data.Vector       ((!))
+import qualified Data.Vector       as Vec
+import           Text.HandsomeSoup (css)
+import           Text.XML.HXT.Core
 
 -- Definition --
 
-data Pegasus = Pegasus { _preds:: !(Vec.Vector (Set.Set Task))
-                       , _succs:: !(Vec.Vector (Set.Set Task))
-                       , _datas:: !(Map.Map Int Data)
-                       , _time:: !(Vec.Vector Time)
-                       , _num:: !Int}
+data Pegasus = Pegasus { _preds :: Vec.Vector (Set.Set Task)
+                       , _succs :: Vec.Vector (Set.Set Task)
+                       , _datas :: Map.Map Int Data
+                       , _time  :: Vec.Vector Time
+                       , _num   :: Int}
 
 instance Workflow Pegasus where
 

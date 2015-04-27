@@ -1,25 +1,25 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Problem.Service.EC2 (EC2, mkService) where
 
-import Problem
-import Data.Vector ((!), (//))
-import qualified Data.Vector as Vec
+import           Data.Vector                ((!), (//))
+import qualified Data.Vector                as Vec
+import           Problem
 
-import Data.Aeson (FromJSON, decode)
+import           Data.Aeson                 (FromJSON, decode)
 import qualified Data.ByteString.Lazy.Char8 as BL
-import GHC.Generics (Generic)
-import Data.Functor
+import           Data.Functor
+import           GHC.Generics               (Generic)
 
 -- Definition --
 
-data EC2 = EC2 { ecus:: {-# UNPACK #-} !(Vec.Vector CU)
-               , prices:: {-# UNPACK #-} !(Vec.Vector Cost)
-               , bandwidths:: {-# UNPACK #-} !(Vec.Vector Bandwidth)
-               , _cachedBW:: {-# UNPACK #-} !(Vec.Vector Bandwidth)
-               , insLimit:: {-# UNPACK #-} !Int
-               , _n:: {-# UNPACK #-} !Int}
+data EC2 = EC2 { ecus       :: Vec.Vector CU
+               , prices     :: Vec.Vector Cost
+               , bandwidths :: Vec.Vector Bandwidth
+               , _cachedBW  :: Vec.Vector Bandwidth
+               , insLimit   :: Int
+               , _n         :: Int}
 
 instance Service EC2 where
   s_cu s = (ecus s !)
@@ -35,10 +35,10 @@ instance Service EC2 where
 
 -- Creation --
 
-data InsItem = InsItem { name::String
-                       , price::Cost
-                       , ecu::CU
-                       , bandwidth::Bandwidth} deriving Generic
+data InsItem = InsItem { name      :: String
+                       , price     :: Cost
+                       , ecu       :: CU
+                       , bandwidth :: Bandwidth} deriving Generic
 
 instance FromJSON InsItem
 

@@ -3,16 +3,8 @@ version: 0.0.1
 cabal-version: >=1.6
 build-type: Simple
 
-library
-    build-depends: aeson -any, base -any, bytestring -any, containers -any, vector -any, deepseq -any, hxt -any, HandsomeSoup -any, lcs -any, unordered-containers -any
-    exposed-modules: Problem, Problem.DAG.Pegasus, Problem.DAG.Random, Problem.Service.EC2, 
-                     Heuristic.HEFT, Heuristic.Cheap, Heuristic.HBCS, Heuristic.MOHEFT
-                     EA, EA.NSGA2, EA.SPEA2, EA.Selection, EA.Init
-                     Utils, Utils.Random, Utils.Math
-    hs-source-dirs: src
-
 executable MoWSC-exp
-    build-depends: cmdargs -any, mersenne-random-pure64 -any, MonadRandom -any
+    build-depends: aeson -any, base -any, bytestring -any, containers -any, vector -any, deepseq -any, hxt -any, HandsomeSoup -any, lcs -any, unordered-containers -any, cmdargs -any, mersenne-random-pure64 -any, MonadRandom -any, ghc-prim -any
     main-is: Exp.hs
     buildable: True
     hs-source-dirs: src

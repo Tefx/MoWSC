@@ -20,7 +20,7 @@ assignSPEA2Fit is = let nz = initNorm is
                         rs = Vec.map (fromIntegral) . calRaw . calS $ is
                         k = round . sqrt . fromIntegral $ Vec.length is
                         ds = Vec.map ((1/) . (+2) . (!!k)) $ calDs nz is
-                    in Vec.zipWith attach is $
+                    in Vec.zipWith (flip attach) is $
                        Vec.zipWith (+) rs ds
 
 spea2Select::EnvSelector

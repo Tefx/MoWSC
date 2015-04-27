@@ -17,6 +17,7 @@ import qualified Data.Set            as Set
 import           Data.Vector         (Vector, (!))
 import qualified Data.Vector         as Vec
 import qualified Data.Vector.Mutable as MVec
+import           Data.Word
 import           Numeric
 
 
@@ -127,13 +128,13 @@ data Schedule = Schedule { orderStr    :: [Task]
                          , ins2typeStr :: Vector InsType}
 
 task2ins::Schedule->Task->Ins
-task2ins a = (task2insStr a !)
+task2ins a t = task2insStr a ! t
 
 ins2type::Schedule->Ins->InsType
-ins2type a = (ins2typeStr a !)
+ins2type a t = ins2typeStr a ! t
 
 task2type::Schedule->Task->InsType
-task2type a = ins2type a . task2ins a
+task2type a t = ins2type a . task2ins a $ t
 
 calObjs::Problem->Schedule->[Double]
 calObjs p s = runST $ simulate p s
@@ -158,11 +159,13 @@ data SimState s = SS { _aft  :: MVec.STVector s Time
                      , _inss :: MVec.STVector s Time
                      , _insf :: MVec.STVector s Time}
 
+_est::Problem->Schedule->Task->MVec.STVector st Time->Task->ST st Time
+_est p s task _aft tp = (commtime p s tp task +) <$> MVec.unsafeRead _aft tp
+
 astTask::Problem->Schedule->SimState st->Task->ST st Time
-astTask p s ss task =
-  let f tp = (commtime p s tp task +) <$> MVec.unsafeRead (_aft ss) tp
-  in do lst <- MVec.unsafeRead (_insf ss) . flip task2ins task $ s
-        maximum . (lst:) <$> (mapM f $ preds p task)
+astTask p s (SS _aft _inss _insf) task =
+  do lst <- MVec.unsafeRead _insf . flip task2ins task $ s
+     maximum . (lst:) <$> (mapM (_est p s task _aft) $ preds p task)
 
 scheduleTask::Problem->Schedule->SimState st->Task->ST st ()
 scheduleTask p s ss task = do st <- astTask p s ss task
@@ -195,5 +198,5 @@ fromPool order locs =
   let _inss = Set.toList . Set.fromList $ Vec.toList locs
       index = Map.fromList $ zip _inss [0..]
       _t2i = Vec.map ((Map.!) index) $ locs
-      _i2t = map (flip div $ length order) _inss
+      _i2t = map (flip quot $ length order) _inss
   in Schedule order _t2i (Vec.fromList _i2t)

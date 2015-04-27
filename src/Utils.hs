@@ -2,7 +2,7 @@ module Utils ( foldM'
              , maxIndex
              , replaceNth
              , unique
-             , With, attached, original, attach) where
+             , With (..), attach) where
 
 import           Data.List   (maximumBy, (\\))
 import           Data.Ord    (comparing)
@@ -28,13 +28,8 @@ unique pop = (Vec.fromList pop0, Vec.fromList pop1)
   where pop0 = Set.toList . Set.fromList . Vec.toList $ pop
         pop1 = Vec.toList pop \\ pop0
 
-type With a b = (a, b)
+data With a b = With { attached :: a
+                     , original :: b}
 
-attached::With a b->a
-attached = fst
-
-original::With a b->b
-original = snd
-
-attach::b->a->With a b
-attach b a = (a,b)
+attach::a->b->With a b
+attach = With
