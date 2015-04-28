@@ -8,12 +8,13 @@
 module Main (main) where
 
 import           EA                            (Chromosome, EASetup (..),
-                                                EAToolbox (..), ExtraEAInfo,
-                                                Individual, NullInfo (..),
-                                                PopInitialiser, Population,
-                                                evalEA, normalBreeder)
+                                                EAToolbox (..), EATrace (..),
+                                                ExtraEAInfo, Individual,
+                                                NullInfo (..), PopInitialiser,
+                                                Population, evalEA,
+                                                normalBreeder)
 import           EA.Chromosome                 (C0, C1, C2)
-import           EA.Init                       (randInsOrTypeOrHEFT, randPool)
+import           EA.Init
 import           EA.NSGA2                      (nsga2Select)
 import           EA.Selection                  (rouletteSelGen,
                                                 tournamentSelGen)
@@ -90,6 +91,9 @@ process args = do
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
     "spea2_c1" -> dumpRes . runEA g $ eaSPEA2_C1 p ec
     "spea2_c2" -> dumpRes . runEA g $ eaSPEA2_C2 p ec
+    "spea2_c2_i1" -> dumpRes . runEA g $ eaSPEA2_C2_i1 p ec
+    "spea2_c2_i2" -> dumpRes . runEA g $ eaSPEA2_C2_i2 p ec
+    "spea2_c2_i3" -> dumpRes . runEA g $ eaSPEA2_C2_i3 p ec
 
 main = process =<< cmdArgs ea
 
@@ -101,12 +105,16 @@ instance (ToJSON i)=>ToJSON (EAResWithInfo i o c)
 dumpRes::(ToJSON i)=>(i,[[ObjValue]])->BL.ByteString
 dumpRes (i,res) = encode $ EARI res i
 
-type PopOnly o c = With NullInfo (Population o c)
-type ExpType o c = (RandomGen g)=>Problem->EASetup->Rand g (PopOnly o c)
-
 deriving instance Generic NullInfo
 deriving instance Show NullInfo
 instance ToJSON NullInfo
+
+deriving instance Generic EATrace
+deriving instance Show EATrace
+instance ToJSON EATrace
+
+type ExpType o c = (RandomGen g)=>
+                   Problem->EASetup->Rand g (With EATrace (Population o c))
 
 runEA::(Objectives o, RandomGen g, ExtraEAInfo i)=>g->
        Rand g (With i (Population o c))->(i, [[ObjValue]])
@@ -144,6 +152,15 @@ eaSPEA2_C1 = spea2 randInsOrTypeOrHEFT
 
 eaSPEA2_C2::ExpType MakespanCost C2
 eaSPEA2_C2 = spea2 randInsOrTypeOrHEFT
+
+eaSPEA2_C2_i1::ExpType MakespanCost C2
+eaSPEA2_C2_i1 = spea2 randInsInType
+
+eaSPEA2_C2_i2::ExpType MakespanCost C2
+eaSPEA2_C2_i2 = spea2 randPool
+
+eaSPEA2_C2_i3::ExpType MakespanCost C2
+eaSPEA2_C2_i3 = spea2 randInsOrType
 
 
 

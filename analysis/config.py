@@ -8,13 +8,13 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 25,
+	"pop_size"	: 50,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
 
 exp_defaults = {
-	"times" : 3,
+	"times" : 1,
 	"args" 	: {}
 }
 
@@ -28,6 +28,15 @@ experiments = {
 	"SPEA2-C2"	:{
 		"cmd"	: "spea2_c2",
 	},
+	# "SPEA2-C2_i1":{
+	# 	"cmd"	: "spea2_c2_i1",
+	# },
+	"SPEA2-C2_i2":{
+		"cmd"	: "spea2_c2_i2",
+	},
+	# "SPEA2-C2_i3":{
+	# 	"cmd"	: "spea2_c2_i3",
+	# },
 	# "SPEA2-C2R"	:{
 	# 	"cmd"	: "spea2_c2r",
 	# },
@@ -59,23 +68,23 @@ dag_pegasus = [
 	"Montage_25",
 	"Montage_50",
 	"Montage_100",
-	"Montage_1000",
-	"Epigenomics_24",
-	"Epigenomics_46",
-	"Epigenomics_100",
-	"Epigenomics_997_fixed",
-	"CyberShake_30",
-	"CyberShake_50",
-	"CyberShake_100",
-	"CyberShake_1000",
-	"Sipht_30",
-	"Sipht_60",
-	"Sipht_100",
-	"Sipht_1000",
-	"Inspiral_30",
-	"Inspiral_50",
-	"Inspiral_100",
-	"Inspiral_1000",
+	# # "Montage_1000",
+	# "Epigenomics_24",
+	# "Epigenomics_46",
+	# "Epigenomics_100",
+	# # "Epigenomics_997_fixed",
+	# "CyberShake_30",
+	# "CyberShake_50",
+	# "CyberShake_100",
+	# # "CyberShake_1000",
+	# "Sipht_30",
+	# "Sipht_60",
+	# "Sipht_100",
+	# # "Sipht_1000",
+	# "Inspiral_30",
+	# "Inspiral_50",
+	# "Inspiral_100",
+	# # "Inspiral_1000",
 ]
 
 ## Database
@@ -85,7 +94,11 @@ db_name = "hookie-exp-test"
 ## Query
 
 query_cond = {
-	"algorithm"	: ["MOHEFT", "SPEA2-C1", "SPEA2-C2", "NSGA2-C2", "SPEA2-C0"],
+	"algorithm"	: [
+		"SPEA2-C2", 
+		"SPEA2-C2_i2",
+		"MOHEFT",
+		],
 	"pop_size" 	: [25],
 }
 
@@ -95,4 +108,6 @@ hv_ref = [1.1, 1.1]
 
 ## Plotting
 
-figure_path_pegasus = "./results/"
+figure_path_pegasus_plot = "./results/"
+figure_path_pegasus_trace = "./results/trace/"
+

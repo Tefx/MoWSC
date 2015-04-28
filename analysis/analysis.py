@@ -2,14 +2,14 @@
 
 from utils import Normaliser
 from hv import HyperVolume
-from config import hv_ref, figure_path_pegasus, dag_pegasus
+from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, dag_pegasus
 from query import query
 
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-def fetch(dag, keys, field):
+def fetch(dag, keys, field, initNZ=None):
 	d = {}
 	nz = Normaliser()
 
@@ -18,8 +18,8 @@ def fetch(dag, keys, field):
 			d[k] = [v]
 		else:
 			d[k].append(v)
-		if isinstance(v, list):
-			nz.update(v)
+		if initNZ:
+			nz.update(initNZ(v))
 	return d, nz
 
 def front_objs(dag, keys):
@@ -31,16 +31,25 @@ def front_objs(dag, keys):
 
 def best_hvs(dag, keys):
 	hv = HyperVolume(hv_ref)
-	d, nz = fetch(dag, keys, "results")
+	d, nz = fetch(dag, keys, "results", id)
 	for k, v in d.iteritems():
 		d[k] = max(hv.compute(map(nz, x)) for x in v)
 	return dag, d
 
 def best_time(dag, keys):
-	d, _ = fetch(dag, keys, "time")
+	d, _ = fetch(dag, keys, "time", id)
 	for k, v in d.iteritems():
 		d[k] = min(v)
 	return dag, d
+
+def evolve_history(dag, key):
+	hv = HyperVolume(hv_ref)
+	d, nz = fetch(dag, keys, "trace", lambda x:x[-1])
+	t = {}
+	for k, v in d.iteritems():
+		best = max(v, key=lambda x:hv.compute(map(nz, x[-1])))
+		t[k]=[hv.compute(map(nz, x)) for x in best]
+	return t
 
 def beDom(x, y):
     if x[0] < y[0]:
@@ -74,7 +83,25 @@ def plot_front(d, save=None):
 
 	plt.legend(lines, names, loc='upper right', numpoints=1)
 	if save:
-		plt.savefig(figure_path_pegasus+save+".jpg", format="jpeg")
+		plt.savefig(figure_path_pegasus_plot+save+".jpg", format="jpeg")
+	else:
+		plt.show()
+
+def plot_trace(d, save=None):
+	fig, ax = plt.subplots()
+	plt.xlabel('Generation')
+	plt.ylabel('HyperVolume')
+
+	lines = []
+	names = []
+
+	for k, v in d.iteritems():
+		lines.append(ax.plot(v)[0])
+		names.append(k)
+
+	plt.legend(lines, names, loc='lower right')
+	if save:
+		plt.savefig(figure_path_pegasus_trace+save+"_trace.jpg", format="jpeg")
 	else:
 		plt.show()
 
@@ -87,6 +114,9 @@ if __name__ == '__main__':
 	elif argv[1] == "hv":
 		for dag in dag_pegasus:
 			print best_hvs(dag, keys)
+	elif argv[1] == "trace":
+		for dag in dag_pegasus:
+			plot_trace(evolve_history(dag, keys), dag)
 	elif argv[1] == "plot":
 		for dag in dag_pegasus:
 			plot_front(front_objs(dag, keys), dag)

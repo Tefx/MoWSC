@@ -10,6 +10,7 @@ from gevent import subprocess
 from couchdb import Server as CouchDBServer, PreconditionFailed
 from gevent.pool import Pool
 from multiprocessing import cpu_count
+import json as json
 
 def gen_cmd(dag, name, conf):
 	ec = deepcopy(exp_defaults)
@@ -29,10 +30,11 @@ def run_exp(cmd, conf):
 	print cmd
 	p = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
 	(out, err) = p.communicate()
-	res = {
-		"results" : [map(float, x.strip().split()) for x in out.splitlines()],
-		"time"	  : time() - start,
-		}
+	res = json.loads(out)
+	if res["extra"] != []:
+		res.update(res["extra"])
+	del res["extra"]	
+	res["time"] = time() - start
 	res.update(conf)
 	db_save(res)
 

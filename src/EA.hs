@@ -1,6 +1,5 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE RankNTypes    #-}
-{-# LANGUAGE TypeFamilies  #-}
+{-# LANGUAGE RankNTypes   #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
@@ -12,18 +11,17 @@ module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
           , evalEA
           , Individual (..)
           , Chromosome (..)
-          , NullInfo (..)) where
+          , NullInfo (..), EATrace (..)) where
 
 import           Control.Monad        (join, replicateM)
 import           Control.Monad.Random (Rand, RandomGen)
-import           Data.Aeson           (ToJSON)
 import           Data.Function        (on)
 import           Data.Functor         ((<$>))
 import           Data.List            (transpose)
+import           Data.Vector          ((//))
 import qualified Data.Vector          as Vec
-import           GHC.Generics         (Generic)
 
-import           MOP                  (Objectives (..), WithObjs (..))
+import           MOP                  (ObjValue, Objectives (..), WithObjs (..))
 import           Problem
 import           Utils
 import           Utils.Random         (doWithProb)
@@ -68,26 +66,31 @@ class Chromosome a where
   repMode _ = (2, 1)
 
 class ExtraEAInfo a where
-  empty::a
+  empty::EASetup->a
   update::(Objectives o, Chromosome c)=>
           Problem->EASetup->Population o c->Int->a->a
   update _ _ _ _ = id
 
-data NullInfo = NullInfo --deriving (Show, Generic)
-
---instance ToJSON NullInfo
+data NullInfo = NullInfo
 
 instance ExtraEAInfo NullInfo where
-  empty = NullInfo
+  empty _ = NullInfo
+
+newtype EATrace = EATrace {trace::Vec.Vector (Vec.Vector [ObjValue])}
+
+instance ExtraEAInfo EATrace where
+  empty c = EATrace . Vec.replicate (numGen c) $ Vec.singleton []
+  update p c pop cur (EATrace trc) = let objs = Vec.map (toList . getObjs) pop
+                                     in EATrace $ trc // [(cur, objs)]
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))
 evalEA p c e = do let  newInd i = let c = encode p i
                                       o = fromList $ calObjs p i
                                   in Individual c o
-                  p0 <- attach empty . Vec.map newInd <$>
+                  p0 <- attach (empty c) . Vec.map newInd <$>
                         (popInit e) p (sizePop c)
-                  foldM' (evolve p c e) p0 [1..numGen c]
+                  foldM' (evolve p c e) p0 [0..numGen c-1]
 
 evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
         Problem->EASetup->EAToolbox->

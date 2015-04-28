@@ -6,6 +6,7 @@ module EA.Init ( randType
                , randHEFT
                , randInsOrTypeOrHEFT
                , randTypeAndIns
+               , randInsInType
                , randPool) where
 
 import           EA                   (PopInitialiser)
