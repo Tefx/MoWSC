@@ -1,22 +1,27 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE RankNTypes   #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE RankNTypes    #-}
+{-# LANGUAGE TypeFamilies  #-}
+
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
-          , normalBreeder, normalUpdater
+          , normalBreeder
           , envSelectN
           , EAToolbox (..)
           , EASetup (..)
+          , ExtraEAInfo
           , evalEA
           , Individual (..)
-          , Chromosome (..)) where
+          , Chromosome (..)
+          , NullInfo (..)) where
 
 import           Control.Monad        (join, replicateM)
 import           Control.Monad.Random (Rand, RandomGen)
+import           Data.Aeson           (ToJSON)
 import           Data.Function        (on)
 import           Data.Functor         ((<$>))
 import           Data.List            (transpose)
 import qualified Data.Vector          as Vec
+import           GHC.Generics         (Generic)
 
 import           MOP                  (Objectives (..), WithObjs (..))
 import           Problem
@@ -29,14 +34,11 @@ type EnvSelector = (WithObjs o)=>Vec.Vector o->Vec.Vector o->Vec.Vector o
 type Breeder = (RandomGen g, Chromosome c, Objectives o)=>Problem->
                EASetup->MutSelector->Population o c->Rand g (Population o c)
 type PopInitialiser = (RandomGen g)=>Problem->Int->Rand g (Vec.Vector Schedule)
-type PopUpdater = (Objectives o, Chromosome c)=>EAToolbox->
-                  With a (Population o c)->(Population o c)->With a (Population o c)
 
 data EAToolbox = EAToolbox { popInit :: PopInitialiser
                            , mutSel  :: MutSelector
                            , envSel  :: EnvSelector
-                           , breeder :: Breeder
-                           , popUpd  :: PopUpdater}
+                           , breeder :: Breeder}
 
 data EASetup = EASetup { numGen  :: Int
                        , sizePop :: Int
@@ -65,19 +67,37 @@ class Chromosome a where
   crossover _ = return
   repMode _ = (2, 1)
 
-evalEA::(Chromosome c, Objectives o, RandomGen g)=>
-        Problem->EASetup->a->EAToolbox->Rand g (With a (Population o c))
-evalEA p c a e@(EAToolbox _init _mSel _eSel _br _upd) =
-  let doGen !pi _ = do pop' <- _br p c _mSel $ original pi
-                       return $ _upd e pi pop'
-      newInd i = let c = encode p i
-                     o = fromList $ calObjs p i
-                 in Individual c o
-  in do p0 <- Vec.map newInd <$> _init p (sizePop c)
-        foldM' doGen (attach a p0) [1..numGen c]
+class ExtraEAInfo a where
+  empty::a
+  update::(Objectives o, Chromosome c)=>
+          Problem->EASetup->Population o c->Int->a->a
+  update _ _ _ _ = id
 
-normalUpdater::PopUpdater
-normalUpdater e s np = attach (attached s) $ (envSel e) (original s) np
+data NullInfo = NullInfo --deriving (Show, Generic)
+
+--instance ToJSON NullInfo
+
+instance ExtraEAInfo NullInfo where
+  empty = NullInfo
+
+evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
+        Problem->EASetup->EAToolbox->Rand g (With i (Population o c))
+evalEA p c e = do let  newInd i = let c = encode p i
+                                      o = fromList $ calObjs p i
+                                  in Individual c o
+                  p0 <- attach empty . Vec.map newInd <$>
+                        (popInit e) p (sizePop c)
+                  foldM' (evolve p c e) p0 [1..numGen c]
+
+evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
+        Problem->EASetup->EAToolbox->
+        With i (Population o c)->Int->Rand g (With i (Population o c))
+
+evolve p c (EAToolbox _ _mSel _eSel _br) wp cur =
+  do let pop = original wp
+     pop' <- _eSel pop <$> _br p c _mSel pop
+     let info = update p c pop' cur $ attached wp
+     return $! attach info pop'
 
 normalBreeder::Breeder
 normalBreeder p c mSel is =

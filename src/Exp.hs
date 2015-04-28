@@ -1,15 +1,17 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE RankNTypes         #-}
-
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TupleSections      #-}
 
 
 module Main (main) where
 
 import           EA                            (Chromosome, EASetup (..),
-                                                EAToolbox (..), Individual,
+                                                EAToolbox (..), ExtraEAInfo,
+                                                Individual, NullInfo (..),
                                                 PopInitialiser, Population,
-                                                evalEA, normalBreeder,
-                                                normalUpdater)
+                                                evalEA, normalBreeder)
 import           EA.Chromosome                 (C0, C1, C2)
 import           EA.Init                       (randInsOrTypeOrHEFT, randPool)
 import           EA.NSGA2                      (nsga2Select)
@@ -20,20 +22,25 @@ import           Heuristic.Cheap               (cheap)
 import           Heuristic.HBCS                (hbcs)
 import           Heuristic.HEFT                (heft)
 import           Heuristic.MOHEFT              (moheft)
-import           MOP                           (MakespanCost, Objectives,
-                                                getObjs)
-import           Problem                       (Problem (Prob), showObjs)
+import           MOP                           (MakespanCost, ObjValue,
+                                                Objectives, getObjs, toList)
+import           Problem                       (Problem (Prob), calObjs, nTask,
+                                                nType)
 import           Problem.DAG.Pegasus           as Pegasus
 import           Problem.DAG.Random            as RandDAG
 import           Problem.Service.EC2           as EC2
 import           Utils                         (With, attached, original)
 
 import           Control.Monad.Random          (Rand, RandomGen, evalRand)
+import           Data.Aeson                    (ToJSON, encode)
+import qualified Data.ByteString.Lazy.Char8    as BL
 import qualified Data.Vector                   as Vec
+import           GHC.Generics                  (Generic)
 import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 def, help, name, summary, typ,
                                                 typFile, (&=))
 import           System.Random.Mersenne.Pure64 (PureMT, newPureMT)
+
 
 data Exp = Exp { alg     :: String
                , limit   :: Int
@@ -64,46 +71,61 @@ process args = do
   s <- EC2.mkService $ limit args
   g <- newPureMT
   let p = Prob w s
-      ec = EASetup { numGen = gen $ args
+      ec = EASetup { numGen = nTask p * nType p
                    , sizePop = popsize $ args
                    , probCrs = pcr $ args
                    , probMut = pmu $ args}
-  case alg $ args of
-   "heft"     -> mapM (putStrLn . showObjs p) [heft p]
-   "cheap"    -> mapM (putStrLn . showObjs p) [cheap p]
-   "hbcs"     -> let kstep = (1.0/) . fromIntegral $ popsize args - 1
-                 in mapM (putStrLn . showObjs p . hbcs p) $ tail [0, kstep..1]
-   "moheft"   -> mapM (putStrLn . showObjs p) . moheft p $ popsize args
-   "nsga2_c0" -> runEAandShow g $ eaNSGA2_C0 p ec
-   "nsga2_c1" -> runEAandShow g $ eaNSGA2_C1 p ec
-   "nsga2_c2" -> runEAandShow g $ eaNSGA2_C2 p ec
-   "spea2_c0" -> runEAandShow g $ eaSPEA2_C0 p ec
-   "spea2_c1" -> runEAandShow g $ eaSPEA2_C1 p ec
-   "spea2_c2" -> runEAandShow g $ eaSPEA2_C2 p ec
-  return ()
+      kstep = (1.0/) . fromIntegral $ popsize args - 1
+  BL.putStrLn $
+    case alg $ args of
+
+    "heft"     -> dumpRes . (NullInfo,) $ map (calObjs p) [heft p]
+    "cheap"    -> dumpRes . (NullInfo,) $ map (calObjs p) [cheap p]
+    "hbcs"     -> dumpRes . (NullInfo,) $ map (calObjs p . hbcs p) $ tail [0, kstep..1]
+    "moheft"   -> dumpRes . (NullInfo,) $ map (calObjs p) . moheft p $ popsize args
+
+    "nsga2_c0" -> dumpRes . runEA g $ eaNSGA2_C0 p ec
+    "nsga2_c1" -> dumpRes . runEA g $ eaNSGA2_C1 p ec
+    "nsga2_c2" -> dumpRes . runEA g $ eaNSGA2_C2 p ec
+    "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
+    "spea2_c1" -> dumpRes . runEA g $ eaSPEA2_C1 p ec
+    "spea2_c2" -> dumpRes . runEA g $ eaSPEA2_C2 p ec
 
 main = process =<< cmdArgs ea
 
-type PopOnly o c = With () (Population o c)
+data EAResWithInfo i o c = EARI { results :: [[ObjValue]]
+                                , extra   :: i} deriving (Show, Generic)
+
+instance (ToJSON i)=>ToJSON (EAResWithInfo i o c)
+
+dumpRes::(ToJSON i)=>(i,[[ObjValue]])->BL.ByteString
+dumpRes (i,res) = encode $ EARI res i
+
+type PopOnly o c = With NullInfo (Population o c)
 type ExpType o c = (RandomGen g)=>Problem->EASetup->Rand g (PopOnly o c)
 
-runEAandShow::(Objectives o, RandomGen g)=>g->Rand g (PopOnly o c)->IO [()]
-runEAandShow g is = mapM (putStrLn . show . getObjs ) .
-                    Vec.toList . original $ evalRand is g
+deriving instance Generic NullInfo
+deriving instance Show NullInfo
+instance ToJSON NullInfo
+
+runEA::(Objectives o, RandomGen g, ExtraEAInfo i)=>g->
+       Rand g (With i (Population o c))->(i, [[ObjValue]])
+runEA g is = let res = evalRand is g
+                 info = attached res
+                 pop = map (toList . getObjs) . Vec.toList $ original res
+             in (info, pop)
 
 nsga2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
-nsga2 i p c = evalEA p c () $ EAToolbox { popInit = i
-                                        , mutSel = tournamentSelGen
-                                        , envSel = nsga2Select
-                                        , breeder = normalBreeder
-                                        , popUpd = normalUpdater}
+nsga2 i p c = evalEA p c $ EAToolbox { popInit = i
+                                     , mutSel = tournamentSelGen
+                                     , envSel = nsga2Select
+                                     , breeder = normalBreeder}
 
 spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
-spea2 i p c = evalEA p c () $ EAToolbox { popInit = i
-                                        , mutSel = tournamentSelGen
-                                        , envSel = spea2Select
-                                        , breeder = normalBreeder
-                                        , popUpd = normalUpdater}
+spea2 i p c = evalEA p c $ EAToolbox { popInit = i
+                                     , mutSel = tournamentSelGen
+                                     , envSel = spea2Select
+                                     , breeder = normalBreeder}
 
 eaNSGA2_C0::ExpType MakespanCost C0
 eaNSGA2_C0 = nsga2 randPool
@@ -122,8 +144,6 @@ eaSPEA2_C1 = spea2 randInsOrTypeOrHEFT
 
 eaSPEA2_C2::ExpType MakespanCost C2
 eaSPEA2_C2 = spea2 randInsOrTypeOrHEFT
-
-
 
 
 

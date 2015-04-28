@@ -3,7 +3,8 @@
 
 module MOP ( Objectives (..), WithObjs (..)
            , initNorm, norm, Normaliser
-           , MakespanCost) where
+           , MakespanCost
+           , ObjValue) where
 
 import qualified Data.Vector as Vec
 import           Numeric     (showFFloat)

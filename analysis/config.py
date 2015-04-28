@@ -8,14 +8,13 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 10,
-	"gen_num" 	: 250,
+	"pop_size"	: 25,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
 
 exp_defaults = {
-	"times" : 1,
+	"times" : 3,
 	"args" 	: {}
 }
 
@@ -87,7 +86,7 @@ db_name = "hookie-exp-test"
 
 query_cond = {
 	"algorithm"	: ["MOHEFT", "SPEA2-C1", "SPEA2-C2", "NSGA2-C2", "SPEA2-C0"],
-	"pop_size" 	: [10, 25, 50],
+	"pop_size" 	: [25],
 }
 
 ## Hypervolume
