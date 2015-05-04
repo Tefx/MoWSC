@@ -3,13 +3,14 @@
 module Utils.Random  ( doWithProb
                      , randPos, uniRandPos
                      , chooseWithP, chooseWithP2, choose
-                     , randSplit) where
+                     , randSplit, rouletteSelect) where
 
 import           Control.Monad.Random
 
 import           Control.Monad        (replicateM)
 import           Data.Functor         ((<$>))
 import           Data.List            (sort)
+import           Data.Vector          ((!))
 import qualified Data.Vector          as Vec
 
 doWithProb::(RandomGen g)=>Double->(a->b)->(a->b)->a->Rand g b
@@ -43,8 +44,16 @@ chooseWithP2 p a b = do
 choose::(RandomGen g)=>a->a->Rand g a
 choose a b = chooseWithP2 0.5 a b
 
-randSplit::RandomGen g=>Double->Vec.Vector a->Rand g (Vec.Vector a, Vec.Vector a)
+randSplit::(RandomGen g)=>Double->Vec.Vector a->Rand g (Vec.Vector a, Vec.Vector a)
 randSplit p vs = do
   (v0, v1) <- Vec.partition snd <$>
               ( flip Vec.mapM vs $ doWithProb p (,True) (,False))
   return (Vec.map fst v0, Vec.map fst v1)
+
+rouletteSelect::(RandomGen g)=>Vec.Vector Double->Int->Rand g [Int]
+rouletteSelect ws n = replicateM n . _rsel ws $ Vec.maximum ws
+
+_rsel::(RandomGen g)=>Vec.Vector Double->Double->Rand g Int
+_rsel ws m = do i <- getRandomR (0, Vec.length ws - 1)
+                p <- getRandomR (0, 1)
+                if p < (ws!i)/m then return i else _rsel ws m

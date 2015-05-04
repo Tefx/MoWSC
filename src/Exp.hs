@@ -55,7 +55,7 @@ import           EA                            (Chromosome, EASetup (..),
                                                 NullInfo (..), PopInitialiser,
                                                 Population, evalEA,
                                                 normalBreeder)
-import           EA.Chromosome                 (C0, C1, C2)
+import           EA.Chromosome                 (C0, C1, C2, C2v2)
 import           EA.Init
 import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
 import           EA.Selection                  (rouletteSelGen,
@@ -135,6 +135,7 @@ process args = do
     "spea2_c2" -> dumpRes . runEA g $ eaSPEA2_C2 p ec
     "spea2_c2_rs" -> dumpRes . runEA g $ eaSPEA2_C2_rs p ec
     "spea2_c2_pi" -> dumpRes . runEA g $ eaSPEA2_C2_pi p ec
+    "spea2_c2v2" -> dumpRes . runEA g $ eaSPEA2_C2v2 p ec
 
 main = process =<< cmdArgs ea
 
@@ -205,3 +206,6 @@ eaSPEA2_C2_rs = spea2_rs randInsOrTypeOrHEFT
 
 eaSPEA2_C2_pi::ExpType MakespanCost C2
 eaSPEA2_C2_pi = spea2 randPool
+
+eaSPEA2_C2v2::ExpType MakespanCost C2v2
+eaSPEA2_C2v2 = spea2 randInsOrTypeOrHEFT
