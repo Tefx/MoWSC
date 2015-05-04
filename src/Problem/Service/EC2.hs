@@ -52,10 +52,10 @@ readInfo::String->IO (Maybe [InsItem])
 readInfo f = decode <$> BL.readFile f
 
 cacheBW::Vec.Vector Bandwidth->Vec.Vector Bandwidth
-cacheBW bs = foldl f e $ [(x,y)|x<-[0..n-1], y<-[0..n-1]]
+cacheBW bs = foldr f e $ [(x,y)|x<-[0..n-1], y<-[0..n-1]]
   where n = Vec.length bs
         e = Vec.replicate (n*n) 0
-        f s (x, y) = s // [(x*n+y, min (bs ! x) (bs ! y))]
+        f (x, y) s = s // [(x*n+y, min (bs ! x) (bs ! y))]
 
 mkService::Int->IO EC2
 mkService limit = do Just is <- readInfo jsonFile

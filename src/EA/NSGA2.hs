@@ -8,7 +8,7 @@ import           Utils         (With, attach, original)
 
 import           Data.Function (on)
 import qualified Data.IntSet   as IntSet
-import           Data.List     (foldl', partition, sortBy)
+import           Data.List     (partition, sortBy)
 import           Data.Ord      (comparing)
 import           Data.Vector   ((!))
 import qualified Data.Vector   as Vec
@@ -71,11 +71,11 @@ _removeINS (x:xs) (s0, s1) = _removeINS xs (s0, IntSet.delete x s1)
 -- Crowd Distances related --
 
 assignDis::(WithObjs o)=>[WithNSGA2Fit o]->[WithNSGA2Fit o]
-assignDis is = foldl' _dis1 is [0..nObjs-1]
+assignDis is = foldr _dis1 is [0..nObjs-1]
   where nObjs = dimesion . getObjs . original . head $ is
 
-_dis1::(WithObjs o)=>[WithNSGA2Fit o]->Int->[WithNSGA2Fit o]
-_dis1 ms i = zipWith _update ms' . _disL . map ((@!i) . getObjs . original) $ ms'
+_dis1::(WithObjs o)=>Int->[WithNSGA2Fit o]->[WithNSGA2Fit o]
+_dis1 i ms = zipWith _update ms' . _disL . map ((@!i) . getObjs . original) $ ms'
   where ms' = sortBy (comparing $ (@!i) . getObjs . original) ms
         _inf = 1e42
         _update x v = let NSGA2Fit i c = fitness x

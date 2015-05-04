@@ -14,19 +14,18 @@ import           Control.Monad.Random (RandomGen, getRandomR)
 import           Data.Vector          ((!))
 import qualified Data.Vector          as Vec
 
-
 rouletteSelGen::(Ord f)=>FitnessAssigner f->MutSelector
-rouletteSelGen fa pop n = replicateM n select
-  where s = (1/) . foldl (\x y->x+1/fromIntegral y) 0 $ [1..Vec.length pop]
-        ws = Vec.fromList . map (((s::Double)/) . fromIntegral) $
-             [1..Vec.length pop]
-        max = Vec.maximum ws
-        pop' = sortByFit fa pop
-        select = do i <- getRandomR (0, Vec.length ws-1)
-                    p <- getRandomR (0, 1)
-                    if p < (ws!i) / max
-                      then return $ pop ! i
-                      else select
+rouletteSelGen fa pop n =
+  let l = map ((1/) . fromIntegral) [1..Vec.length pop] :: [Double]
+      ws = Vec.fromList $ map (/sum l) l
+      max = Vec.maximum ws
+      pop' = sortByFit fa pop
+      select = do i <- getRandomR (0, Vec.length ws-1)
+                  p <- getRandomR (0, 1)
+                  if p < (ws!i) / max
+                    then return $ pop ! i
+                    else select
+  in replicateM n select
 
 tournamentSelGen::MutSelector
 tournamentSelGen pop n = replicateM n $

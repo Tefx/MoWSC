@@ -24,20 +24,20 @@ def fetch(dag, keys, field, initNZ=None):
 
 def front_objs(dag, keys):
 	hv = HyperVolume(hv_ref)
-	d, nz = fetch(dag, keys, "results")
+	d, nz = fetch(dag, keys, "results", lambda x:x)
 	for k, v in d.iteritems():
 		d[k] = max(v, key=lambda x: hv.compute(map(nz, x)))
 	return d
 
 def best_hvs(dag, keys):
 	hv = HyperVolume(hv_ref)
-	d, nz = fetch(dag, keys, "results", id)
+	d, nz = fetch(dag, keys, "results", lambda x:x)
 	for k, v in d.iteritems():
 		d[k] = max(hv.compute(map(nz, x)) for x in v)
 	return dag, d
 
 def best_time(dag, keys):
-	d, _ = fetch(dag, keys, "time", id)
+	d, _ = fetch(dag, keys, "time")
 	for k, v in d.iteritems():
 		d[k] = min(v)
 	return dag, d

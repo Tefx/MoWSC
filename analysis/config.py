@@ -25,20 +25,14 @@ experiments = {
 	# "SPEA2-C1"	:{
 	# 	"cmd"	: "spea2_c1",
 	# },
-	"SPEA2-C2"	:{
-		"cmd"	: "spea2_c2",
-	},
-	# "SPEA2-C2_i1":{
-	# 	"cmd"	: "spea2_c2_i1",
+	# "SPEA2-C2"	:{
+	# 	"cmd"	: "spea2_c2",
 	# },
-	"SPEA2-C2_i2":{
-		"cmd"	: "spea2_c2_i2",
+	"SPEA2-C2_rs"	:{
+		"cmd"	: "spea2_c2_rs",
 	},
-	# "SPEA2-C2_i3":{
-	# 	"cmd"	: "spea2_c2_i3",
-	# },
-	# "SPEA2-C2R"	:{
-	# 	"cmd"	: "spea2_c2r",
+	# "SPEA2-C2_ri":{
+	# 	"cmd"	: "spea2_c2_ri",
 	# },
 	# "NSGA2-C1"	:{
 	# 	"cmd" 	: "nsga2_c1",
@@ -46,10 +40,10 @@ experiments = {
 	# "NSGA2-C2"	:{
 	# 	"cmd" 	: "nsga2_c2",
 	# },
-	"MOHEFT"	:{
-		"times" : 1,
-		"cmd"	: "moheft",
-	},
+	# "MOHEFT"	:{
+	# 	"times" : 1,
+	# 	"cmd"	: "moheft",
+	# },
 	# "HBCS" 		:{
 	# 	"times"	: 1,
 	# 	"cmd"	: "hbcs",
@@ -68,23 +62,23 @@ dag_pegasus = [
 	"Montage_25",
 	"Montage_50",
 	"Montage_100",
-	# # "Montage_1000",
-	# "Epigenomics_24",
-	# "Epigenomics_46",
-	# "Epigenomics_100",
-	# # "Epigenomics_997_fixed",
-	# "CyberShake_30",
-	# "CyberShake_50",
-	# "CyberShake_100",
-	# # "CyberShake_1000",
-	# "Sipht_30",
-	# "Sipht_60",
-	# "Sipht_100",
-	# # "Sipht_1000",
-	# "Inspiral_30",
-	# "Inspiral_50",
-	# "Inspiral_100",
-	# # "Inspiral_1000",
+	# "Montage_1000",
+	"Epigenomics_24",
+	"Epigenomics_46",
+	"Epigenomics_100",
+	# "Epigenomics_997_fixed",
+	"CyberShake_30",
+	"CyberShake_50",
+	"CyberShake_100",
+	# "CyberShake_1000",
+	"Sipht_30",
+	"Sipht_60",
+	"Sipht_100",
+	# "Sipht_1000",
+	"Inspiral_30",
+	"Inspiral_50",
+	"Inspiral_100",
+	# "Inspiral_1000",
 ]
 
 ## Database
@@ -96,15 +90,15 @@ db_name = "hookie-exp-test"
 query_cond = {
 	"algorithm"	: [
 		"SPEA2-C2", 
-		"SPEA2-C2_i2",
-		"MOHEFT",
+		"SPEA2-C2_rs", 
+		# "MOHEFT/",
 		],
-	"pop_size" 	: [25],
+	"pop_size" 	: [50],
 }
 
 ## Hypervolume
 
-hv_ref = [1.1, 1.1]
+hv_ref = [1.01, 1.01]
 
 ## Plotting
 

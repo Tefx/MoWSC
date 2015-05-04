@@ -6,7 +6,7 @@ module Heuristic ( PartialSchedule (..)
 import Problem
 import Data.Vector (Vector, (!), (//))
 import qualified Data.Vector as Vec
-import Data.List (foldl', sortBy, sort, group)
+import Data.List (sortBy, sort, group)
 import qualified Data.Map.Strict as Map
 import Data.Set (member, insert)
 import qualified Data.Set as Set
@@ -29,10 +29,10 @@ class PartialSchedule ps where
   schedule::Pool pl=>Problem->
             Int->ps pl->[Schedule]
   schedule p k s0 = map (tidySchedule p pl o . Vec.toList . locations) .
-                    foldl' f [s0] $ o
+                    foldr f [s0] $ reverse o
     where o = getOrder p
           pl = pool s0
-          f ss t = let ss' = sortSchedule p $ ss >>= next p t
+          f t ss = let ss' = sortSchedule p $ ss >>= next p t
                    in if length ss' <= k then ss'
                       else take k ss'
 
@@ -163,7 +163,7 @@ getRank p = _getRank p (Vec.replicate (nTask p) 0) (nTask p - 1)
   where _getRank p rs t
           | t < 0 = rs
           | otherwise = let f x = _meanTimeComm p t x + rs ! x
-                            rx = _meanTimeComp p t + foldl max 0 (map f $ succs p t)
+                            rx = _meanTimeComp p t + foldr max 0 (map f $ succs p t)
                             rs' = rs // [(t, rx)]
                         in _getRank p (rs') $ t-1
 

@@ -11,7 +11,6 @@ import           Utils.Random          (chooseWithP, doWithProb, randPos,
 import           Control.Monad         (join)
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
 import           Data.Functor          ((<$>))
-import           Data.List             (foldl')
 import           Data.Maybe            (fromJust)
 import           Data.Ord              (comparing)
 import           Data.Set              (Set, insert, member, notMember, union,
@@ -32,14 +31,11 @@ instance Chromosome C2 where
                                        , mutateMerge p prob
                                        , mutateType p prob]
     is' <- f $ _inss i
-    -- is0 <- doWithProb 0.5 (mutateSplit p prob (_order i)) (mutateMerge p prob) $
-    --        _inss i
-    -- is' <- is0 >>= mutateType p prob
     o' <- mutateOrder p $ _order i
     return $ C2 o' is'
 
   encode p (Schedule _o _t2i _i2t) = C2 _o is
-    where is = foldl' (_insertTask _t2i)
+    where is = foldr (_insertTask _t2i)
                (Vec.map (flip IHost Set.empty) _i2t)
                [0..nTask p - 1]
           v = if Vec.length is > nIns p then Vec.length is - nIns p else 0
@@ -54,7 +50,7 @@ data InsHost = IHost { _type  :: InsType
 
 mergeHosts::Vector InsHost->InsHost
 mergeHosts is = let t = _type $ Vec.maximumBy (comparing $ Set.size . _tasks) is
-                in IHost t . Vec.foldl' union Set.empty . Vec.map _tasks $ is
+                in IHost t . Vec.foldr union Set.empty . Vec.map _tasks $ is
 
 splitHost::[Task]->InsHost->[Int]->[InsHost]
 splitHost o i@(IHost t ts) [p0, p1]
@@ -81,7 +77,7 @@ mutateSplit::RandomGen g=>Problem->
              Double->[Task]->Vector InsHost->Rand g (Vector InsHost)
 mutateSplit _ prob o is =
   let f i = Vec.fromList . splitHost o i <$> (randPos 2 . Set.size $ _tasks i)
-  in Vec.foldl' (Vec.++) Vec.empty <$>
+  in Vec.foldr (Vec.++) Vec.empty <$>
      (flip Vec.mapM is $
       join . doWithProb prob f (return . Vec.singleton))
 
@@ -105,6 +101,6 @@ crossoverIns p o (is0, is1) = do
                 \i->updateTask i $ Set.filter (flip notMember ts) (_tasks i)
   return $ (Vec.++) sub_is0 sub_is1
 
-_insertTask::Vector Ins->Vector InsHost->Task->Vector InsHost
-_insertTask _t2i is t = let i = _t2i ! t
+_insertTask::Vector Ins->Task->Vector InsHost->Vector InsHost
+_insertTask _t2i t is = let i = _t2i ! t
                         in is // [(i, insertTask t $ is ! i)]

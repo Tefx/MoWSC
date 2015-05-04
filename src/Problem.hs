@@ -17,8 +17,7 @@ import qualified Data.Set            as Set
 import           Data.Vector         (Vector, (!))
 import qualified Data.Vector         as Vec
 import qualified Data.Vector.Mutable as MVec
-import           Data.Word
-import           Numeric
+import           Numeric             (showFFloat)
 
 
 type Time = Double
@@ -165,7 +164,7 @@ _est p s task _aft tp = (commtime p s tp task +) <$> MVec.unsafeRead _aft tp
 astTask::Problem->Schedule->SimState st->Task->ST st Time
 astTask p s (SS _aft _inss _insf) task =
   do lst <- MVec.unsafeRead _insf . flip task2ins task $ s
-     maximum . (lst:) <$> (mapM (_est p s task _aft) $ preds p task)
+     foldr max lst <$> (mapM (_est p s task _aft) $ preds p task)
 
 scheduleTask::Problem->Schedule->SimState st->Task->ST st ()
 scheduleTask p s ss task = do st <- astTask p s ss task
