@@ -18,13 +18,13 @@ data C0 = C0 { _order :: Orders
 instance Chromosome C0 where
   repMode _ = (2, 2)
 
-  mutate p i = do
+  mutate p _ i = do
     o' <- mutateOrder p $ _order i
     pos <- getRandomR (0, nTask p-1)
     l' <- getRandomR (0, nTask p * nType p - 1)
     return . C0 o' $ _str i // [(pos, l')]
 
-  crossover p [i0, i1] = do
+  crossover p _ [i0, i1] = do
     [s0, s1] <- twoPointCrossover (_str i0) (_str i1)
     [o0, o1] <- crossoverOrder p (_order i0) (_order i1)
     return $ [C0 o0 s0, C0 o1 s1]

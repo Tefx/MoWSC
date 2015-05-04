@@ -18,7 +18,7 @@ data C1 = C1 { _order    :: [Task]
 instance Chromosome C1 where
   repMode _ = (2, 2)
 
-  crossover p [t0,t1] = do
+  crossover p _ [t0,t1] = do
     [o0, o1] <- crossoverOrder p (_order t0) (_order t1)
     [(t2i0, i2t0), (t2i1, i2t1)] <- crossoverIns p (_task2ins t0)
                                                    (_task2ins t1)
@@ -26,7 +26,7 @@ instance Chromosome C1 where
                                                    (_ins2type t1)
     return [C1 o0 t2i0 i2t0, C1 o1 t2i1 i2t1]
 
-  mutate p i = do
+  mutate p _ i = do
     order' <- mutateOrder p $ _order i
     task2ins' <- fastMutate (nTask p - 1) (nIns p - 1) $ _task2ins i
     ins2type' <- fastMutate (nIns p - 1) (nType p - 1) $ _ins2type i

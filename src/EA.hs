@@ -30,7 +30,7 @@ type Population o c = Vec.Vector (Individual o c)
 type MutSelector = (RandomGen g, WithObjs o)=>Vec.Vector o->Int->Rand g [o]
 type EnvSelector = (WithObjs o)=>Vec.Vector o->Vec.Vector o->Vec.Vector o
 type Breeder = (RandomGen g, Chromosome c, Objectives o)=>Problem->
-               EASetup->MutSelector->Population o c->Rand g (Population o c)
+               EASetup->Int->MutSelector->Population o c->Rand g (Population o c)
 type PopInitialiser = (RandomGen g)=>Problem->Int->Rand g (Vec.Vector Schedule)
 
 data EAToolbox = EAToolbox { popInit :: PopInitialiser
@@ -55,14 +55,14 @@ instance (Objectives o)=>WithObjs (Individual o c) where
 
 class Chromosome a where
   repMode::a->(Int, Int)
-  crossover::(RandomGen g)=>Problem->[a]->Rand g [a]
-  mutate::(RandomGen g)=>Problem->a->Rand g a
+  crossover::(RandomGen g)=>Problem->Int->[a]->Rand g [a]
+  mutate::(RandomGen g)=>Problem->Int->a->Rand g a
 
   decode::Problem->a->Schedule
   encode::Problem->Schedule->a
 
-  mutate _ = return
-  crossover _ = return
+  mutate _ _ = return
+  crossover _ _ = return
   repMode _ = (2, 1)
 
 class ExtraEAInfo a where
@@ -98,22 +98,22 @@ evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
 
 evolve p c (EAToolbox _ _mSel _eSel _br) wp cur =
   do let pop = original wp
-     pop' <- _eSel pop <$> _br p c _mSel pop
+     pop' <- _eSel pop <$> _br p c cur _mSel pop
      let info = update p c pop' cur $ attached wp
      return $! attach info pop'
 
 normalBreeder::Breeder
-normalBreeder p c mSel is =
+normalBreeder p c cur mSel is =
   do s <- transpose <$> (replicateM nP $ mSel is (sizePop c `quot` nC))
-     Vec.fromList . concat <$> mapM (reproduce p c) s
+     Vec.fromList . concat <$> mapM (reproduce p c cur) s
   where (nP, nC) = repMode . chrm $ Vec.head is
 
 reproduce::(Chromosome c, Objectives o, RandomGen g)=>
-           Problem->EASetup->[Individual o c]->Rand g [Individual o c]
-reproduce p c is =
+           Problem->EASetup->Int->[Individual o c]->Rand g [Individual o c]
+reproduce p c cur is =
   let repChrm cs = do
-        cs' <- join $ doWithProb (probCrs c) (crossover p) return cs
-        mapM (join . doWithProb (probMut c) (mutate p) return) cs'
+        cs' <- join $ doWithProb (probCrs c) (crossover p cur) return cs
+        mapM (join . doWithProb (probMut c) (mutate p cur) return) cs'
   in do cs' <- repChrm $ map chrm is
         return . zipWith Individual cs' $
           map (fromList . calObjs p . decode p) cs'

@@ -25,7 +25,7 @@ data C2 = C2 { _order :: Orders
 instance Chromosome C2 where
   repMode _ = (1, 1)
 
-  mutate p i = do
+  mutate p _ i = do
     let prob = (1.0/) . fromIntegral . Vec.length . _inss $ i
     f <- chooseWithP [0.25, 0.25, 0.5] [ mutateSplit p prob (_order i)
                                        , mutateMerge p prob
