@@ -25,12 +25,12 @@ notNullIH (IH _ _) = True
 mergeHosts::(InsHost, InsHost)->InsHost
 mergeHosts (IH t0 ts0, IH t1 ts1) = IH t0 $ IntSet.union ts0 ts1
 
-splitHost::[Task]->Int->InsHost->(InsHost, InsHost)
-splitHost o p (IH t ts) = let (o0, o1) = splitAt p o
-                              ts0 = filter (flip IntSet.member ts) o0
-                              ts1 = filter (flip IntSet.member ts) o1
-                          in ((IH t $ IntSet.fromList ts0),
-                              (IH t $ IntSet.fromList ts1))
+splitHost::[Task]->(Int, Int)->InsHost->(InsHost, InsHost)
+splitHost o (p0, p1) (IH t ts) = let ts0 = IntSet.fromList .
+                                           drop p0 . take (p1+1) $
+                                           filter (flip IntSet.member ts) o
+                                     ts1 = IntSet.filter (not . flip IntSet.member ts0) ts
+                                 in (IH t ts0, IH t ts1)
 
 data C2v2 = C2v2 { _order :: Orders
                  , _inss  :: Vec.Vector InsHost}
@@ -65,9 +65,9 @@ mutateMerge is = do [p0, p1] <- randPos 2 $ Vec.length is
                                         , (p1, NullIH)]
 
 mutateSplit::(RandomGen g)=>Orders->Vec.Vector InsHost->Rand g (Vec.Vector InsHost)
-mutateSplit o is = do pt <- getRandomR (0, length o-1)
-                      ph <- getRandomR (0, Vec.length is-1)
-                      let (h0, h1) = splitHost o pt $ is ! ph
+mutateSplit o is = do ph <- getRandomR (0, Vec.length is-1)
+                      [p0, p1] <- randPos 2 . IntSet.size . _tasks $ is ! ph
+                      let (h0, h1) = splitHost o (p0, p1) $ is ! ph
                       return $ if (IntSet.null $ _tasks h0) ||
                                   (IntSet.null $ _tasks h1)
                                then is
