@@ -8,13 +8,13 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 30,
+	"pop_size"	: 10,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
 
 exp_defaults = {
-	"times" : 3,
+	"times" : 1,
 	"args" 	: {}
 }
 
@@ -62,25 +62,25 @@ experiments = {
 dag_pegasus_path = "./resources/workflows/Pegasus/%s.xml"
 
 dag_pegasus = [
-	"Montage_25",
-	"Montage_50",
-	"Montage_100",
-	# "Montage_1000",
-	"Epigenomics_24",
-	"Epigenomics_46",
-	"Epigenomics_100",
-	# # "Epigenomics_997_fixed",
-	"CyberShake_30",
-	"CyberShake_50",
-	"CyberShake_100",
-	# "CyberShake_1000",
+	# "Montage_25",
+	# "Montage_50",
+	# "Montage_100",
+	# # "Montage_1000",
+	# "Epigenomics_24",
+	# "Epigenomics_46",
+	# "Epigenomics_100",
+	# # # "Epigenomics_997_fixed",
+	# "CyberShake_30",
+	# "CyberShake_50",
+	# "CyberShake_100",
+	# # "CyberShake_1000",
 	"Sipht_30",
 	"Sipht_60",
 	"Sipht_100",
 	# "Sipht_1000",
-	"Inspiral_30",
-	"Inspiral_50",
-	"Inspiral_100",
+	# "Inspiral_30",
+	# "Inspiral_50",
+	# "Inspiral_100",
 	# # "Inspiral_1000",
 ]
 
@@ -97,7 +97,7 @@ query_cond = {
 		# "SPEA2-C2_rs", 
 		# "MOHEFT",
 		],
-	"pop_size" 	: [30],
+	"pop_size" 	: [10],
 }
 
 ## Hypervolume

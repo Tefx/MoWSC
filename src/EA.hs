@@ -80,8 +80,10 @@ newtype EATrace = EATrace {trace::Vec.Vector (Vec.Vector [ObjValue])}
 
 instance ExtraEAInfo EATrace where
   empty c = EATrace . Vec.replicate (numGen c) $ Vec.singleton []
-  update p c pop cur (EATrace trc) = let objs = Vec.map (toList . getObjs) pop
-                                     in EATrace $ trc // [(cur, objs)]
+  update p c pop cur i@(EATrace trc)
+    | cur `rem` 10 == 0 = i
+    | otherwise = let objs = Vec.map (toList . getObjs) pop
+                  in EATrace $ trc // [(cur, objs)]
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))

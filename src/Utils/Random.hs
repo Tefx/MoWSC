@@ -50,10 +50,9 @@ randSplit p vs = do
               ( flip Vec.mapM vs $ doWithProb p (,True) (,False))
   return (Vec.map fst v0, Vec.map fst v1)
 
-rouletteSelect::(RandomGen g)=>Vec.Vector Double->Int->Rand g [Int]
-rouletteSelect ws n = replicateM n . _rsel ws $ Vec.maximum ws
-
-_rsel::(RandomGen g)=>Vec.Vector Double->Double->Rand g Int
-_rsel ws m = do i <- getRandomR (0, Vec.length ws - 1)
-                p <- getRandomR (0, 1)
-                if p < (ws!i)/m then return i else _rsel ws m
+rouletteSelect::(RandomGen g)=>Int->Vec.Vector Double->Rand g [Int]
+rouletteSelect n ws = let m = Vec.maximum ws
+                          _rsel = do i <- getRandomR (0, Vec.length ws - 1)
+                                     p <- getRandomR (0, 1)
+                                     if p <= (ws!i)/m then return i else _rsel
+                      in replicateM n $ _rsel

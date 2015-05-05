@@ -6,7 +6,7 @@ import           EA.Chromosome.Generic (mutateOrder)
 import           Problem               (Ins, InsType, Orders, Problem,
                                         Schedule (..), Task, nIns, nTask, nType)
 import           Utils.Random          (chooseWithP, doWithProb, randPos,
-                                        randSplit)
+                                        randSplit, rouletteSelect)
 
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
 import qualified Data.IntSet           as IntSet
@@ -40,15 +40,14 @@ instance Chromosome C2v2 where
   repMode _ = (1, 1)
 
   mutate p _ (C2v2 o is) = do
-    f <- chooseWithP [1/3, 1/3, 1/3] [ mutateMerge
-                                     , mutateSplit o
-                                     , mutateType p]
-    is' <- f is
+    f <- chooseWithP [1/2, 1/2] [mutateMerge, mutateSplit o]
+    is' <- f is >>= mutateType p
     o' <- mutateOrder p o
     return $ C2v2 o' is'
 
   encode p (Schedule _o _t2i _i2t) = C2v2 _o is
-    where is = foldr (_insertTask _t2i)
+    where is = Vec.filter (not . IntSet.null . _tasks) $
+               foldr (_insertTask _t2i)
                (Vec.map (flip IH IntSet.empty) _i2t)
                [0..nTask p - 1]
           v = if Vec.length is > nIns p then Vec.length is - nIns p else 0
