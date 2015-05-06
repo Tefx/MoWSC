@@ -55,8 +55,8 @@ instance (Objectives o)=>WithObjs (Individual o c) where
 
 class Chromosome a where
   repMode::a->(Int, Int)
-  crossover::(RandomGen g)=>Problem->Int->[a]->Rand g [a]
-  mutate::(RandomGen g)=>Problem->Int->a->Rand g a
+  crossover::(RandomGen g)=>Problem->Double->[a]->Rand g [a]
+  mutate::(RandomGen g)=>Problem->Double->a->Rand g a
 
   decode::Problem->a->Schedule
   encode::Problem->Schedule->a
@@ -107,11 +107,12 @@ evolve p c (EAToolbox _ _mSel _eSel _br) wp cur =
 normalBreeder::Breeder
 normalBreeder p c cur mSel is =
   do s <- transpose <$> (replicateM nP $ mSel is (sizePop c `quot` nC))
-     Vec.fromList . concat <$> mapM (reproduce p c cur) s
+     Vec.fromList . concat <$> mapM (reproduce p c pg) s
   where (nP, nC) = repMode . chrm $ Vec.head is
+        pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
 reproduce::(Chromosome c, Objectives o, RandomGen g)=>
-           Problem->EASetup->Int->[Individual o c]->Rand g [Individual o c]
+           Problem->EASetup->Double->[Individual o c]->Rand g [Individual o c]
 reproduce p c cur is =
   let repChrm cs = do
         cs' <- join $ doWithProb (probCrs c) (crossover p cur) return cs

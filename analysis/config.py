@@ -8,7 +8,7 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 50,
+	"pop_size"	: 30,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
@@ -28,8 +28,11 @@ experiments = {
 	# "SPEA2-C2"	:{
 	# 	"cmd"	: "spea2_c2",
 	# },
-	"SPEA2-C2v2i"	:{
+	"SPEA2-C2v2"	:{
 		"cmd"	: "spea2_c2v2",
+	},
+	"SPEA2-C2v3"	:{
+		"cmd"	: "spea2_c2v3",
 	},
 	# "SPEA2-C2_rs"	:{
 	# 	"cmd"	: "spea2_c2_rs",
@@ -94,11 +97,11 @@ query_cond = {
 	"algorithm"	: [
 		"SPEA2-C2", 
 		"SPEA2-C2v2", 
-		"SPEA2-C2v2i", 
+		"SPEA2-C2v3",  
 		# "SPEA2-C2_rs", 
 		"MOHEFT",
 		],
-	"pop_size" 	: [50],
+	"pop_size" 	: [30],
 }
 
 ## Hypervolume
