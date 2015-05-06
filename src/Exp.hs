@@ -133,10 +133,9 @@ process args = do
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
     "spea2_c1" -> dumpRes . runEA g $ eaSPEA2_C1 p ec
     "spea2_c2" -> dumpRes . runEA g $ eaSPEA2_C2 p ec
-    "spea2_c2_rs" -> dumpRes . runEA g $ eaSPEA2_C2_rs p ec
-    "spea2_c2_pi" -> dumpRes . runEA g $ eaSPEA2_C2_pi p ec
     "spea2_c2v2" -> dumpRes . runEA g $ eaSPEA2_C2v2 p ec
     "spea2_c2v3" -> dumpRes . runEA g $ eaSPEA2_C2v3 p ec
+    "nsga2_c2v3" -> dumpRes . runEA g $ eaNSGA2_C2v3 p ec
 
 main = process =<< cmdArgs ea
 
@@ -178,12 +177,6 @@ spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , envSel = spea2Select
                                      , breeder = normalBreeder}
 
-spea2_rs::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
-spea2_rs i p c = evalEA p c $ EAToolbox { popInit = i
-                                        , mutSel = rouletteSelGen assignNSGA2Fit
-                                        , envSel = spea2Select
-                                        , breeder = normalBreeder}
-
 eaNSGA2_C0::ExpType MakespanCost C0
 eaNSGA2_C0 = nsga2 randPool
 
@@ -202,14 +195,11 @@ eaSPEA2_C1 = spea2 randInsOrTypeOrHEFT
 eaSPEA2_C2::ExpType MakespanCost C2
 eaSPEA2_C2 = spea2 randInsOrTypeOrHEFT
 
-eaSPEA2_C2_rs::ExpType MakespanCost C2
-eaSPEA2_C2_rs = spea2_rs randInsOrTypeOrHEFT
-
-eaSPEA2_C2_pi::ExpType MakespanCost C2
-eaSPEA2_C2_pi = spea2 randPool
-
 eaSPEA2_C2v2::ExpType MakespanCost C2v2
 eaSPEA2_C2v2 = spea2 randInsOrTypeOrHEFT
 
 eaSPEA2_C2v3::ExpType MakespanCost C2v3
 eaSPEA2_C2v3 = spea2 randInsOrTypeOrHEFT
+
+eaNSGA2_C2v3::ExpType MakespanCost C2v3
+eaNSGA2_C2v3 = nsga2 randInsOrTypeOrHEFT
