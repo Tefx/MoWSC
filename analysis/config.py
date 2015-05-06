@@ -31,12 +31,12 @@ experiments = {
 	# "SPEA2-C2v2"	:{
 	# 	"cmd"	: "spea2_c2v2",
 	# },
-	# "SPEA2-C2v3"	:{
-	# 	"cmd"	: "spea2_c2v3",
-	# },
-	"NSGA2-C2v3"	:{
-		"cmd"	: "nsga2_c2v3",
+	"SPEA2-C2v3ic"	:{
+		"cmd"	: "spea2_c2v3",
 	},
+	# "NSGA2-C2v3"	:{
+	# 	"cmd"	: "nsga2_c2v3",
+	# },
 	# "SPEA2-C2_rs"	:{
 	# 	"cmd"	: "spea2_c2_rs",
 	# },
@@ -101,7 +101,7 @@ query_cond = {
 		"SPEA2-C2", 
 		"SPEA2-C2v2", 
 		"SPEA2-C2v3",   
-		"NSGA2-C2v3",   
+		"SPEA2-C2v3ic",
 		# "SPEA2-C2_rs", 
 		# "MOHEFT",
 		# "HBCS",
