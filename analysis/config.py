@@ -31,7 +31,7 @@ experiments = {
 	# "SPEA2-C2v2"	:{
 	# 	"cmd"	: "spea2_c2v2",
 	# },
-	"SPEA2-C2v3ic"	:{
+	"SPEA2-C2v3pc"	:{
 		"cmd"	: "spea2_c2v3",
 	},
 	# "NSGA2-C2v3"	:{
@@ -101,7 +101,7 @@ query_cond = {
 		"SPEA2-C2", 
 		"SPEA2-C2v2", 
 		"SPEA2-C2v3",   
-		"SPEA2-C2v3ic",
+		"SPEA2-C2v3pc",
 		# "SPEA2-C2_rs", 
 		# "MOHEFT",
 		# "HBCS",
