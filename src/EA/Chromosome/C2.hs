@@ -55,7 +55,7 @@ mergeHosts is = let t = _type $ Vec.maximumBy (comparing $ Set.size . _tasks) is
 splitHost::[Task]->InsHost->[Int]->[InsHost]
 splitHost o i@(IHost t ts) [p0, p1]
   | p0 == p1 = [i]
-  | otherwise = let s' = Set.fromList . take (p1 - p0 + 1) . drop p0
+  | otherwise = let s' = Set.fromList . take (p1 - p0) . drop p0
                          $ filter (flip member ts) o
                 in [IHost t $ ts \\ s', IHost t s']
 
@@ -76,7 +76,7 @@ mutateMerge _ prob is = do (m, r) <- randSplit (prob * 2) is
 mutateSplit::RandomGen g=>Problem->
              Double->[Task]->Vector InsHost->Rand g (Vector InsHost)
 mutateSplit _ prob o is =
-  let f i = Vec.fromList . splitHost o i <$> (randPos 2 . Set.size $ _tasks i)
+  let f i = Vec.fromList . splitHost o i <$> (randPos 2 . (+1) . Set.size $ _tasks i)
   in Vec.foldr (Vec.++) Vec.empty <$>
      (flip Vec.mapM is $
       join . doWithProb prob f (return . Vec.singleton))
