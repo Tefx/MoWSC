@@ -8,14 +8,14 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 50,
-	"gen_num" 	: 2000,
+	"pop_size"	: 20,
+	"gen_num" 	: 5000,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
 
 exp_defaults = {
-	"times" : 1,
+	"times" : 2,
 	"args" 	: {}
 }
 
@@ -29,34 +29,22 @@ experiments = {
 	"SPEA2-C2"	:{
 		"cmd"	: "spea2_c2",
 	},
-	# "SPEA2-C2v3"	:{
-	# 	"cmd"	: "spea2_c2v2",
-	# },
 	"SPEA2-C3"	:{
 		"cmd"	: "spea2_c3",
 	},
 	"SPEA2-C4"	:{
 		"cmd"	: "spea2_c4",
 	},
-	# "NSGA2-C2v3"	:{
-	# 	"cmd"	: "nsga2_c2v3",
-	# },
-	# "SPEA2-C2_rs"	:{
-	# 	"cmd"	: "spea2_c2_rs",
-	# },
-	# "SPEA2-C2_ri":{
-	# 	"cmd"	: "spea2_c2_ri",
-	# },
 	# "NSGA2-C1"	:{
 	# 	"cmd" 	: "nsga2_c1",
 	# },
 	# "NSGA2-C2"	:{
 	# 	"cmd" 	: "nsga2_c2",
 	# },
-	# "MOHEFT"	:{
-	# 	"times" : 1,
-	# 	"cmd"	: "moheft",
-	# },
+	"MOHEFT"	:{
+		"times" : 1,
+		"cmd"	: "moheft",
+	},
 	# "HBCS" 		:{
 	# 	"times"	: 1,
 	# 	"cmd"	: "hbcs",
@@ -91,7 +79,7 @@ dag_pegasus = [
 	"Inspiral_30",
 	"Inspiral_50",
 	"Inspiral_100",
-	# "Inspiral_1000",
+	"Inspiral_1000",
 ]
 
 ## Database
@@ -105,10 +93,10 @@ query_cond = {
 		"SPEA2-C2", 
 		"SPEA2-C3",   
 		"SPEA2-C4",   
-		# "MOHEFT",
+		"MOHEFT",
 		# "HBCS",
 		],
-	"pop_size" 	: [50],
+	"pop_size" 	: [20],
 }
 
 ## Hypervolume

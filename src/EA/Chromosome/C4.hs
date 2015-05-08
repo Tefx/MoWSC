@@ -22,12 +22,11 @@ absorb::(RandomGen g)=>Problem->Host->Host->Rand g Host
 absorb _ (Host t0 tl0) (Host t1 tl1) = flip Host (tl0 ++ tl1) <$> choose t0 t1
 
 reject::(RandomGen g)=>Problem->Host->Rand g [Host]
-reject p (Host t tl) =
+reject p (Host t tl) = do
   let pb = (1/) . fromIntegral $ length tl
-  in do (tl0, tl1) <- partition snd <$>
-                      mapM (doWithProb pb (,True) (,False)) tl
-        t0 <- getRandomR (0, nType p-1)
-        return [Host t0 $ map fst tl0, Host t $ map fst tl1]
+  (tl0, tl1) <- partition snd <$>
+                mapM (doWithProb pb (,True) (,False)) tl
+  return [Host t $ map fst tl0, Host t $ map fst tl1]
 
 scale::(RandomGen g)=>Problem->Host->Rand g Host
 scale p (Host t tl) = flip Host tl <$> getRandomR (0, nType p-1)
@@ -45,7 +44,8 @@ instance Chromosome C4 where
   repMode _ = (1, 1)
 
   encode p (Schedule o t2i i2t) =
-    let _updT t hs = let i = t2i!t in hs // [(i, insertTask t $ hs!i)]
+    let _updT t hs = let i = t2i!t
+                     in hs // [(i, insertTask t $ hs!i)]
     in C4 o . filterUsed $
        foldr _updT (Vec.map (flip Host []) i2t) [0..nTask p-1]
 
@@ -56,9 +56,8 @@ instance Chromosome C4 where
     in Schedule o t2i i2t
 
   mutate p _ (C4 o hs) = do
-    hs' <- mutateByRejection p hs >>=
-           mutateByAbsorption p >>=
-           mutateInTypes p
+    mf <- choose mutateByRejection mutateByAbsorption
+    hs' <- mf p hs >>= mutateInTypes p
     o' <- mutateOrder p o
     return $ C4 o' hs'
 
@@ -71,12 +70,14 @@ mutateInTypes p hs =
 
 mutateByRejection::(RandomGen g)=>Problem->Vec.Vector Host->Rand g (Vec.Vector Host)
 mutateByRejection p hs =
-  filterUsed . Vec.fromList . concat . Vec.toList <$>
-  Vec.mapM (join . doWithProb (mutateProb 1 hs) (reject p) (return . (:[]))) hs
+  do i <- getRandomR (0, Vec.length hs-1)
+     [h0, h1] <- reject p $ hs!i
+     if (null $ _tasks h0) || (null $ _tasks h1) then return hs
+       else return . Vec.cons h1 $ hs // [(i, h0)]
 
 mutateByAbsorption::(RandomGen g)=>Problem->Vec.Vector Host->Rand g (Vec.Vector Host)
-mutateByAbsorption p hs =
-  do [p0, p1] <- randPos 2 $ Vec.length hs
-     if p0 == p1 then return hs
-       else do h' <- absorb p (hs!p0) (hs!p1)
-               return . Vec.ifilter (\i _->i /= p1) $ hs // [(p0, h')]
+mutateByAbsorption p hs = do
+  [p0, p1] <- randPos 2 $ Vec.length hs
+  if p0 == p1 then return hs
+    else do h' <- absorb p (hs!p0) (hs!p1)
+            return . Vec.ifilter (\i _->i /= p1) $ hs // [(p0, h')]
