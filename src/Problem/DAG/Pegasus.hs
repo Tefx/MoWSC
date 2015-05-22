@@ -97,8 +97,8 @@ mergeDeps c d = let deps = d ++ map (\x -> (x, 0)) c
 
 replaceDeps::[((TaskID, TaskID), Data)] -> [((TaskID, TaskID), Data)]
 replaceDeps = map (\x -> case x of
-                        (("_", a), b) -> (("entry", a), b)
-                        ((a, "_"), b) -> ((a, "exit"), b)
+                        (("_", a), _) -> (("entry", a), 0)
+                        ((a, "_"), _) -> ((a, "exit"), 0)
                         x -> x)
 
 addPN::[(TaskID, Time)] -> [(TaskID, Time)]
