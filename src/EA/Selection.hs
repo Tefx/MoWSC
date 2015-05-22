@@ -1,7 +1,8 @@
 {-# LANGUAGE RankNTypes #-}
 
 module EA.Selection ( rouletteSelGen
-                    , tournamentSelGen) where
+                    , tournamentSelGen
+                    , nullSelGen) where
 
 import           EA                   (MutSelector)
 import           EA.Utils             (FitnessAssigner, sortByFit)
@@ -33,3 +34,6 @@ tournamentSelGen pop n = replicateM n $
                             let i0 = pop ! l0
                                 i1 = pop ! l1
                             return $ if getObjs i0 <<< getObjs i1 then i0 else i1
+
+nullSelGen::MutSelector
+nullSelGen pop n = return . take n $ Vec.toList pop

@@ -55,10 +55,10 @@ import           EA                            (Chromosome, EASetup (..),
                                                 NullInfo (..), PopInitialiser,
                                                 Population, evalEA,
                                                 normalBreeder)
-import           EA.Chromosome                 (C0, C1, C2, C3, C4)
+import           EA.Chromosome                 (C0, C1, C2, C3, C3i, C4)
 import           EA.Init
 import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
-import           EA.Selection                  (rouletteSelGen,
+import           EA.Selection                  (nullSelGen, rouletteSelGen,
                                                 tournamentSelGen)
 import           EA.SPEA2                      (assignSPEA2Fit, spea2Select)
 import           Heuristic.Cheap               (cheap)
@@ -134,6 +134,7 @@ process args = do
     "spea2_c1" -> dumpRes . runEA g $ eaSPEA2_C1 p ec
     "spea2_c2" -> dumpRes . runEA g $ eaSPEA2_C2 p ec
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
+    "spea2_c3i" -> dumpRes . runEA g $ eaSPEA2_C3i p ec
     "spea2_c4" -> dumpRes . runEA g $ eaSPEA2_C4 p ec
 
 main = process =<< cmdArgs ea
@@ -172,7 +173,7 @@ nsga2 i p c = evalEA p c $ EAToolbox { popInit = i
 
 spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 spea2 i p c = evalEA p c $ EAToolbox { popInit = i
-                                     , mutSel = tournamentSelGen
+                                     , mutSel = nullSelGen
                                      , envSel = spea2Select
                                      , breeder = normalBreeder}
 
@@ -196,6 +197,9 @@ eaSPEA2_C2 = spea2 randInsOrTypeOrHEFT
 
 eaSPEA2_C3::ExpType MakespanCost C3
 eaSPEA2_C3 = spea2 randInsOrTypeOrHEFT
+
+eaSPEA2_C3i::ExpType MakespanCost C3i
+eaSPEA2_C3i = spea2 randInsOrTypeOrHEFT
 
 eaSPEA2_C4::ExpType MakespanCost C4
 eaSPEA2_C4 = spea2 randInsOrTypeOrHEFT

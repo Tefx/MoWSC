@@ -65,7 +65,7 @@ def nonDom(x, xs):
 def pareto_filter(xs):
     return [x for x in xs if nonDom(x, xs)]
 
-def plot_front(d, save=None):
+def plot_front(d, save=None, pareto=True):
 	fig, ax = plt.subplots()
 	plt.xlabel('Time(s)')
 	plt.ylabel('Cost(\$)')
@@ -76,9 +76,15 @@ def plot_front(d, save=None):
 	names = []
 
 	for k, v in d.iteritems():
-		ps = sorted(pareto_filter(v), key=lambda x: (x[0], x[1]))
+		if pareto:
+			v = pareto_filter(v)
+		ps = sorted(v, key=lambda x: (x[0], x[1]))
 		x, y = zip(*ps)
-		lines.append(ax.plot(x, y, ".-")[0])
+		if pareto: 
+			mark = ".-"
+		else:
+			mark = "."
+		lines.append(ax.plot(x, y, mark)[0])
 		names.append(k)
 
 	plt.legend(lines, names, loc='upper right', numpoints=1)
@@ -120,5 +126,6 @@ if __name__ == '__main__':
 	elif argv[1] == "plot":
 		for dag in dag_pegasus:
 			plot_front(front_objs(dag, keys), dag)
-
-
+	elif argv[1] == "plot_d":
+		for dag in dag_pegasus:
+			plot_front(front_objs(dag, keys), dag, False)

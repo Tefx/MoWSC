@@ -12,13 +12,12 @@ import           Numeric     (showFFloat)
 type ObjValue = Double
 
 class (Show a)=>Objectives a where
-  dimesion::a->Int
-  (@!)::a->Int->ObjValue
-  (<<<)::a->a->Bool
-  toList::a->[ObjValue]
-  fromList::[ObjValue]->a
+  dimesion :: a->Int
+  (@!)     :: a->Int->ObjValue
+  (<<<)    :: a->a->Bool
+  toList   :: a->[ObjValue]
+  fromList :: [ObjValue]->a
 
-  dimesion = length . toList
   toList a = map (a@!) [0..dimesion a-1]
 
 class (Show a, Objectives (Objs a))=>WithObjs a where
