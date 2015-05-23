@@ -128,14 +128,10 @@ process args = do
     "moheft"   -> dumpRes . (NullInfo,) $ map (calObjs p) . moheft p $ popsize args
 
     "nsga2_c0" -> dumpRes . runEA g $ eaNSGA2_C0 p ec
-    "nsga2_c1" -> dumpRes . runEA g $ eaNSGA2_C1 p ec
-    "nsga2_c2" -> dumpRes . runEA g $ eaNSGA2_C2 p ec
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
-    "spea2_c1" -> dumpRes . runEA g $ eaSPEA2_C1 p ec
-    "spea2_c2" -> dumpRes . runEA g $ eaSPEA2_C2 p ec
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
     "spea2_c3r" -> dumpRes . runEA g $ eaSPEA2_C3r p ec
-    "spea2_c4" -> dumpRes . runEA g $ eaSPEA2_C4 p ec
+    "spea2_c3sr" -> dumpRes . runEA g $ eaSPEA2_C3sr p ec
 
 main = process =<< cmdArgs ea
 
@@ -178,28 +174,16 @@ spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , breeder = normalBreeder}
 
 eaNSGA2_C0::ExpType MakespanCost C0
-eaNSGA2_C0 = nsga2 randPool
-
-eaNSGA2_C1::ExpType MakespanCost C1
-eaNSGA2_C1 = nsga2 randInsOrTypeOrHEFT
-
-eaNSGA2_C2::ExpType MakespanCost C2
-eaNSGA2_C2 = nsga2 randInsOrTypeOrHEFT
+eaNSGA2_C0 = nsga2 randPoolOrHeft
 
 eaSPEA2_C0::ExpType MakespanCost C0
 eaSPEA2_C0 = spea2 randPool
 
-eaSPEA2_C1::ExpType MakespanCost C1
-eaSPEA2_C1 = spea2 randInsOrTypeOrHEFT
-
-eaSPEA2_C2::ExpType MakespanCost C2
-eaSPEA2_C2 = spea2 randInsOrTypeOrHEFT
-
 eaSPEA2_C3::ExpType MakespanCost C3
-eaSPEA2_C3 = spea2 randInsOrTypeOrHEFT
+eaSPEA2_C3 = spea2 randTypeSROrHEFT
 
 eaSPEA2_C3r::ExpType MakespanCost C3
-eaSPEA2_C3r = spea2 randPool
+eaSPEA2_C3r = spea2 randPoolOrHeft
 
-eaSPEA2_C4::ExpType MakespanCost C4
-eaSPEA2_C4 = spea2 randInsOrTypeOrHEFT
+eaSPEA2_C3sr::ExpType MakespanCost C3
+eaSPEA2_C3sr = spea2 randTypeSR

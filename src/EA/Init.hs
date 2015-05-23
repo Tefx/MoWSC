@@ -1,12 +1,10 @@
 {-# LANGUAGE RankNTypes #-}
 
-module EA.Init ( randTypeSingle, randTypeAll, randTypeR, randTypeP
+module EA.Init ( randTypeSingle, randTypeAll, randTypeR, randTypeSR
                , randIns
-               , randInsOrType
                , randHEFT
-               , randInsOrTypeOrHEFT
-               , randInsInType
-               , randPool) where
+               , randTypeSROrHEFT
+               , randPool, randPoolOrHeft) where
 
 import           EA                   (PopInitialiser)
 import           Heuristic            (getOrder)
@@ -41,14 +39,6 @@ randTypeR p n = Vec.replicateM n $ do
   i2t <- Vec.replicate n <$> getRandomR (0, nType p - 1)
   return $ Schedule (getOrder p) t2i i2t
 
-randTypeP::PopInitialiser
-randTypeP p n = do let k = div n 5
-                   is0 <- randTypeAll p k
-                   is1 <- randTypeSingle p k
-                   is2 <- randTypeR p $ k * 3
-                   (Vec.++) is0 . (Vec.++) is1 . (Vec.++) is2 <$>
-                     randHEFT p 2
-
 randIns::PopInitialiser
 randIns p n = Vec.replicateM n $ do
   t2i <- Vec.replicateM (nTask p) $ getRandomR (0, nIns p - 1)
@@ -75,21 +65,17 @@ cheapest p = let h = maximumBy (comparing $ \x -> cu p x / insPrice p x) [0..nTy
 extreme::Problem->Vec.Vector Schedule
 extreme p = Vec.fromList [fastest p, cheapest p]
 
-randInsOrType::PopInitialiser
-randInsOrType p n = (liftM2 (Vec.++)) (randTypeR p m) (randTypeSingle p m)
+randTypeSR::PopInitialiser
+randTypeSR p n = (liftM2 (Vec.++)) (randTypeR p m) (randTypeSingle p m)
   where m = div n 2
 
-randInsOrTypeOrHEFT::PopInitialiser
-randInsOrTypeOrHEFT p n = (liftM2 (Vec.++)) (randHEFT p 2) (randInsOrType p $ n - 2)
-
-randInsInType::PopInitialiser
-randInsInType p n = Vec.replicateM n $ do
-  num_ins <- getRandomR (1, nTask p)
-  t2i <- Vec.replicateM (nTask p) $ getRandomR (0, num_ins - 1)
-  i2t <- Vec.replicate num_ins <$> getRandomR (0, nType p - 1)
-  return $ Schedule (getOrder p) t2i i2t
+randTypeSROrHEFT::PopInitialiser
+randTypeSROrHEFT p n = (liftM2 (Vec.++)) (randHEFT p 2) (randTypeSR p $ n - 2)
 
 randPool::PopInitialiser
 randPool p n = Vec.replicateM n $ do
   loc <- Vec.replicateM (nTask p) $ getRandomR (0, nTask p * nType p - 1)
   return $ fromPool [0..nTask p-1] loc
+
+randPoolOrHeft::PopInitialiser
+randPoolOrHeft p n = (liftM2 (Vec.++)) (randHEFT p 2) (randPool p $ n - 2)

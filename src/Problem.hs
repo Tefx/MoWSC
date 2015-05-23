@@ -143,11 +143,7 @@ showObjs p s = showFFloat (Just 2) x " " ++ showFFloat (Just 2) y ""
   where [x, y] = calObjs p s
 
 commtime::Problem->Schedule->Task->Task->Time
-commtime p s t0 t1
-    | i0 == i1 = 0
-    | otherwise = comm p t0 t1 / bw p (ins2type s i0) (ins2type s i1)
-    where i0 = (task2ins s t0)
-          i1 = (task2ins s t1)
+commtime _ _ _ _ = 0
 
 comptime::Problem->Schedule->Task->Time
 comptime p s task = refTime p task / cu p (task2type s task)
@@ -158,13 +154,10 @@ data SimState s = SS { _aft  :: MVec.STVector s Time
                      , _inss :: MVec.STVector s Time
                      , _insf :: MVec.STVector s Time}
 
-_est::Problem->Schedule->Task->MVec.STVector st Time->Task->ST st Time
-_est p s task _aft tp = (commtime p s tp task +) <$> MVec.unsafeRead _aft tp
-
 astTask::Problem->Schedule->SimState st->Task->ST st Time
 astTask p s (SS _aft _inss _insf) task =
   do lst <- MVec.unsafeRead _insf . flip task2ins task $ s
-     foldr max lst <$> (mapM (_est p s task _aft) $ preds p task)
+     foldr max lst <$> (mapM (MVec.unsafeRead _aft) $ preds p task)
 
 scheduleTask::Problem->Schedule->SimState st->Task->ST st ()
 scheduleTask p s ss task = do st <- astTask p s ss task
@@ -190,7 +183,6 @@ simulate p s = do
   ssf <- Vec.freeze $ _insf ss
   let ts = Vec.filter (\(_,x,_)->x>=0) $ Vec.zip3 _i ssv ssf
   return $ [makespan,  charge p . Account $ Vec.toList ts]
-
 
 fromPool::[Task]->Vector Ins->Schedule
 fromPool order locs =
