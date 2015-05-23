@@ -134,7 +134,7 @@ process args = do
     "spea2_c1" -> dumpRes . runEA g $ eaSPEA2_C1 p ec
     "spea2_c2" -> dumpRes . runEA g $ eaSPEA2_C2 p ec
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
-    "spea2_c3i" -> dumpRes . runEA g $ eaSPEA2_C3i p ec
+    "spea2_c3r" -> dumpRes . runEA g $ eaSPEA2_C3r p ec
     "spea2_c4" -> dumpRes . runEA g $ eaSPEA2_C4 p ec
 
 main = process =<< cmdArgs ea
@@ -198,8 +198,8 @@ eaSPEA2_C2 = spea2 randInsOrTypeOrHEFT
 eaSPEA2_C3::ExpType MakespanCost C3
 eaSPEA2_C3 = spea2 randInsOrTypeOrHEFT
 
-eaSPEA2_C3i::ExpType MakespanCost C3i
-eaSPEA2_C3i = spea2 randInsOrTypeOrHEFT
+eaSPEA2_C3r::ExpType MakespanCost C3
+eaSPEA2_C3r = spea2 randPool
 
 eaSPEA2_C4::ExpType MakespanCost C4
 eaSPEA2_C4 = spea2 randInsOrTypeOrHEFT
