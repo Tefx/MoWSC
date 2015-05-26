@@ -1,6 +1,6 @@
 module Heuristic ( PartialSchedule (..)
                  , Pool (..), InfinityPool, FullPool
-                 , timeComm, timeComp
+                 , timeComp
                  , getOrder) where
 
 import Problem
@@ -50,10 +50,10 @@ class Pool a where
   totalCost::a->Cost
   totalCost pl = sum . map (cost pl) $ availIns pl
 
-  allocIns::PartialSchedule pl=>Problem->
+  allocIns::(PartialSchedule pl)=>Problem->
             pl a->Task->Ins->(Time, Time, a, a)
 
-  scheduleTask::PartialSchedule pl=>Problem->
+  scheduleTask::(PartialSchedule pl)=>Problem->
                 pl a->Task->Ins->(Time, Time)
 
   prepare::Problem->a
@@ -62,10 +62,7 @@ class Pool a where
 
   scheduleTask p s t i = (st, ft)
     where pl = pool s
-          st = maximum . (availTime pl i:) . flip map (preds p t) $
-               \tp->
-                timeComm p pl tp t (locations s ! tp) i
-                + (finishTimes s ! tp)
+          st = foldr max (availTime pl i) . map (finishTimes s !) $ (preds p t)
           ft = st + timeComp p pl t i
 
   newCost p pl i st ft = charge p $ Account [(insType pl i, st, ft)]
@@ -92,12 +89,8 @@ instance Pool InfinityPool where
           n = _n pl
 
   allocIns p s t i = (st, ft, pl, pl')
-    where pl = pool s
-          st = maximum . (availTime pl i:) . flip map (preds p t) $
-               \tp->
-                timeComm p pl tp t (locations s ! tp) i
-                + (finishTimes s ! tp)
-          ft = st + timeComp p pl t i
+    where (st, ft) = scheduleTask p s t i
+          pl = pool s
           pl' = if i `member` _ins pl
                 then pl { _availTime = Map.insert i ft $ _availTime pl
                         , _costs = _updateCost p pl i (startTime pl i) ft}
@@ -150,22 +143,16 @@ instance Pool FullPool where
 
 -- Some helper functions --
 
-timeComm::Pool pl=>Problem->pl->Task->Task->Ins->Ins->Time
-timeComm p pl t0 t1 i0 i1
-  | i0 == i1 = 0
-  | otherwise = comm p t0 t1 / bw p (insType pl i0) (insType pl i1)
-
 timeComp::Pool pl=>Problem->pl->Task->Ins->Time
 timeComp p pl t i = refTime p t / cu p (insType pl i)
 
 getRank::Problem->Vector Double
-getRank p = _getRank p (Vec.replicate (nTask p) 0) (nTask p - 1)
-  where _getRank p rs t
+getRank p = _getRank (Vec.replicate (nTask p) 0) (nTask p - 1)
+  where _getRank rs t
           | t < 0 = rs
-          | otherwise = let f x = _meanTimeComm p t x + rs ! x
-                            rx = _meanTimeComp p t + foldr max 0 (map f $ succs p t)
+          | otherwise = let rx = _meanTimeComp p t + foldr max 0 (map (rs!) $ succs p t)
                             rs' = rs // [(t, rx)]
-                        in _getRank p (rs') $ t-1
+                        in _getRank (rs') $ t-1
 
 getOrder::Problem->[Task]
 getOrder p = sortBy compRank [0..(Vec.length rs - 1)]

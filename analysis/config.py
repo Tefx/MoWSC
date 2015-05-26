@@ -9,13 +9,13 @@ arg_tags = {
 
 args_defaults = {
 	"pop_size"	: 10,
-	"gen_num" 	: 2000,
+	"gen_num" 	: 5000,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
 
 exp_defaults = {
-	"times" : 2,
+	"times" : 1,
 	"args" 	: {}
 }
 
@@ -23,24 +23,34 @@ experiments = {
 	# "SPEA2-C0"	:{
 	# 	"cmd"	: "spea2_c0",
 	# },
-	# "SPEA2-C1"	:{
-	# 	"cmd"	: "spea2_c1",
-	# },
-	# "SPEA2-C2"	:{
-	# 	"cmd"	: "spea2_c2",
-	# },
-	# "SPEA2-C3"	:{
+	# "SPEA2-C3n"	:{
 	# 	"cmd"	: "spea2_c3",
 	# },
-	"SPEA2-C3r"	:{
-		"cmd"	: "spea2_c3r",
+	"NSGA2-C3"	:{
+		"cmd"	: "nsga2_c3",
 	},
-	# "SPEA2-C4"	:{
-	# 	"cmd"	: "spea2_c4",
+	# "SPEA2-C3r"	:{
+	# 	"cmd"	: "spea2_c3r",
+	# },
+	# "SPEA2-C3sr"	:{
+	# 	"cmd"	: "spea2_c3sr",
+	# },
+	# # "SPEA2-C3h2"	:{
+	# # 	"cmd"	: "spea2_c3h2",
+	# # },
+	# # "SPEA2-C3mls"	:{
+	# # 	"cmd"	: "spea2_c3mls",
+	# # },
+	# "SPEA2-C3srm"	:{
+	# 	"cmd"	: "spea2_c3srm",
 	# },
 	# "MOHEFT"	:{
 	# 	"times" : 1,
 	# 	"cmd"	: "moheft",
+	# },
+	# "MLS"	:{
+	# 	"times" : 1,
+	# 	"cmd"	: "mls",
 	# },
 	# "HBCS" 		:{
 	# 	"times"	: 1,
@@ -88,18 +98,14 @@ db_name = "hookie-exp-test"
 query_cond = {
 	"algorithm"	: [
 		"SPEA2-C0", 
-		# "NSGA2-C0i", 
-		# "NSGA2-C0ts", 
-		# "NSGA2-C0ta", 
-		# "NSGA2-C0tr", 
-		# "NSGA2-C0it", 
 		"SPEA2-C3",
-		"SPEA2-C3r",         
-		# "SPEA2-C3_2",    
-		# "SPEA2-C3_7",                    
-		# "SPEA2-C4",   
-		# "MOHEFT",
-		# "HBCS",
+		"NSGA2-C3",
+		"SPEA2-C3n",           
+		"SPEA2-C3sr",                 
+		"SPEA2-C3srm",    
+		"NSGA2-C3",           
+		"MOHEFT",
+		"MLS",
 		],
 	"pop_size" 	: [10],
 }
