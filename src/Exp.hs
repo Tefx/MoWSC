@@ -64,6 +64,7 @@ import           EA.SPEA2                      (assignSPEA2Fit, spea2Select)
 import           Heuristic.Cheap               (cheap)
 import           Heuristic.HBCS                (hbcs)
 import           Heuristic.HEFT                (heft)
+import           Heuristic.MLS                 (mls)
 import           Heuristic.MOHEFT              (moheft)
 import           MOP                           (MakespanCost, ObjValue,
                                                 Objectives, getObjs, toList)
@@ -124,14 +125,17 @@ process args = do
 
     "heft"     -> dumpRes . (NullInfo,) $ map (calObjs p) [heft p]
     "cheap"    -> dumpRes . (NullInfo,) $ map (calObjs p) [cheap p]
-    "hbcs"     -> dumpRes . (NullInfo,) $ map (calObjs p . hbcs p) $ tail [0, kstep..1]
-    "moheft"   -> dumpRes . (NullInfo,) $ map (calObjs p) . moheft p $ popsize args
+    "hbcs"     -> dumpRes . (NullInfo,) . map (calObjs p . hbcs p) $ tail [0, kstep..1]
+    "moheft"   -> dumpRes . (NullInfo,) . map (calObjs p) . moheft p $ popsize args
+    "mls"      -> dumpRes . (NullInfo,) . map (calObjs p) . mls p $ popsize args
 
-    "nsga2_c0" -> dumpRes . runEA g $ eaNSGA2_C0 p ec
+    "nsga2_c3" -> dumpRes . runEA g $ eaNSGA2_C3 p ec
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
-    "spea2_c3r" -> dumpRes . runEA g $ eaSPEA2_C3r p ec
     "spea2_c3sr" -> dumpRes . runEA g $ eaSPEA2_C3sr p ec
+    "spea2_c3h2" -> dumpRes . runEA g $ eaSPEA2_C3h2 p ec
+    "spea2_c3mls" -> dumpRes . runEA g $ eaSPEA2_C3mls p ec
+    "spea2_c3srm" -> dumpRes . runEA g $ eaSPEA2_C3srm p ec
 
 main = process =<< cmdArgs ea
 
@@ -173,17 +177,26 @@ spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , envSel = spea2Select
                                      , breeder = normalBreeder}
 
-eaNSGA2_C0::ExpType MakespanCost C0
-eaNSGA2_C0 = nsga2 randPoolOrHeft
+eaNSGA2_C3::ExpType MakespanCost C3
+eaNSGA2_C3 = nsga2 randTypeSRH
 
 eaSPEA2_C0::ExpType MakespanCost C0
 eaSPEA2_C0 = spea2 randPool
 
 eaSPEA2_C3::ExpType MakespanCost C3
-eaSPEA2_C3 = spea2 randTypeSROrHEFT
+eaSPEA2_C3 = spea2 randTypeSRH
 
 eaSPEA2_C3r::ExpType MakespanCost C3
 eaSPEA2_C3r = spea2 randPoolOrHeft
 
 eaSPEA2_C3sr::ExpType MakespanCost C3
 eaSPEA2_C3sr = spea2 randTypeSR
+
+eaSPEA2_C3h2::ExpType MakespanCost C3
+eaSPEA2_C3h2 = spea2 randHEFT
+
+eaSPEA2_C3mls::ExpType MakespanCost C3
+eaSPEA2_C3mls = spea2 randMLS
+
+eaSPEA2_C3srm::ExpType MakespanCost C3
+eaSPEA2_C3srm = spea2 randTypeSROrMLS

@@ -2,16 +2,17 @@
 
 module EA.Init ( randTypeSingle, randTypeAll, randTypeR, randTypeSR
                , randIns
-               , randHEFT
-               , randTypeSROrHEFT
+               , randHEFT, randMLS
+               , randTypeSRH, randTypeSROrMLS
                , randPool, randPoolOrHeft) where
 
 import           EA                   (PopInitialiser)
 import           Heuristic            (getOrder)
 import           Heuristic.Cheap      (cheap)
 import           Heuristic.HEFT       (heft)
-import           Problem              (Problem, Schedule (..), cu, fromPool,
-                                       insPrice, nIns, nTask, nType)
+import           Heuristic.MLS        (mls)
+import           Problem              (Problem, Schedule (..), calObjs, cu,
+                                       fromPool, insPrice, nIns, nTask, nType)
 
 import           Control.Monad        (liftM2)
 import           Control.Monad.Random (RandomGen, getRandomR)
@@ -69,8 +70,8 @@ randTypeSR::PopInitialiser
 randTypeSR p n = (liftM2 (Vec.++)) (randTypeR p m) (randTypeSingle p m)
   where m = div n 2
 
-randTypeSROrHEFT::PopInitialiser
-randTypeSROrHEFT p n = (liftM2 (Vec.++)) (randHEFT p 2) (randTypeSR p $ n - 2)
+randTypeSRH::PopInitialiser
+randTypeSRH p n = (liftM2 (Vec.++)) (randHEFT p 2) (randTypeSR p $ n - 2)
 
 randPool::PopInitialiser
 randPool p n = Vec.replicateM n $ do
@@ -79,3 +80,9 @@ randPool p n = Vec.replicateM n $ do
 
 randPoolOrHeft::PopInitialiser
 randPoolOrHeft p n = (liftM2 (Vec.++)) (randHEFT p 2) (randPool p $ n - 2)
+
+randMLS::PopInitialiser
+randMLS p n = return . Vec.fromList $ mls p n
+
+randTypeSROrMLS::PopInitialiser
+randTypeSROrMLS p n = (liftM2 (Vec.++)) (randMLS p 3) (randTypeSR p $ n - 3)

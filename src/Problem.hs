@@ -142,9 +142,6 @@ showObjs::Problem->Schedule->String
 showObjs p s = showFFloat (Just 2) x " " ++ showFFloat (Just 2) y ""
   where [x, y] = calObjs p s
 
-commtime::Problem->Schedule->Task->Task->Time
-commtime _ _ _ _ = 0
-
 comptime::Problem->Schedule->Task->Time
 comptime p s task = refTime p task / cu p (task2type s task)
 

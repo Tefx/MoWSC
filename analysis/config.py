@@ -8,14 +8,14 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 25,
-	"gen_num" 	: 2000,
+	"pop_size"	: 10,
+	"gen_num" 	: 5000,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
 
 exp_defaults = {
-	"times" : 4,
+	"times" : 1,
 	"args" 	: {}
 }
 
@@ -23,8 +23,11 @@ experiments = {
 	# "SPEA2-C0"	:{
 	# 	"cmd"	: "spea2_c0",
 	# },
-	"SPEA2-C3"	:{
-		"cmd"	: "spea2_c3",
+	# "SPEA2-C3n"	:{
+	# 	"cmd"	: "spea2_c3",
+	# },
+	"NSGA2-C3"	:{
+		"cmd"	: "nsga2_c3",
 	},
 	# "SPEA2-C3r"	:{
 	# 	"cmd"	: "spea2_c3r",
@@ -32,9 +35,22 @@ experiments = {
 	# "SPEA2-C3sr"	:{
 	# 	"cmd"	: "spea2_c3sr",
 	# },
+	# # "SPEA2-C3h2"	:{
+	# # 	"cmd"	: "spea2_c3h2",
+	# # },
+	# # "SPEA2-C3mls"	:{
+	# # 	"cmd"	: "spea2_c3mls",
+	# # },
+	# "SPEA2-C3srm"	:{
+	# 	"cmd"	: "spea2_c3srm",
+	# },
 	# "MOHEFT"	:{
 	# 	"times" : 1,
 	# 	"cmd"	: "moheft",
+	# },
+	# "MLS"	:{
+	# 	"times" : 1,
+	# 	"cmd"	: "mls",
 	# },
 	# "HBCS" 		:{
 	# 	"times"	: 1,
@@ -83,11 +99,15 @@ query_cond = {
 	"algorithm"	: [
 		"SPEA2-C0", 
 		"SPEA2-C3",
-		"SPEA2-C3r",           
-		"SPEA2-C3sr",           
+		"NSGA2-C3",
+		"SPEA2-C3n",           
+		"SPEA2-C3sr",                 
+		"SPEA2-C3srm",    
+		"NSGA2-C3",           
 		"MOHEFT",
+		"MLS",
 		],
-	"pop_size" 	: [25],
+	"pop_size" 	: [10],
 }
 
 ## Hypervolume
