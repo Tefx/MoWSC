@@ -13,18 +13,21 @@ module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
           , Chromosome (..)
           , NullInfo (..), EATrace (..)) where
 
-import           Control.Monad        (join, replicateM)
-import           Control.Monad.Random (Rand, RandomGen)
-import           Data.Function        (on)
-import           Data.Functor         ((<$>))
-import           Data.List            (transpose)
-import           Data.Vector          ((//))
-import qualified Data.Vector          as Vec
+import           Control.Monad             (join, replicateM)
+import           Control.Monad.Random      (Rand, RandomGen)
+import           Data.Function             (on)
+import           Data.Functor              ((<$>))
+import           Data.List                 (transpose)
+import           Data.Vector               ((//))
+import qualified Data.Vector               as Vec
 
-import           MOP                  (ObjValue, Objectives (..), WithObjs (..))
+import           MOP                       (ObjValue, Objectives (..),
+                                            WithObjs (..))
 import           Problem
 import           Utils
-import           Utils.Random         (doWithProb)
+import           Utils.Random              (doWithProb)
+
+import           Problem.ForeignEvaluation
 
 type Population o c = Vec.Vector (Individual o c)
 type MutSelector = (RandomGen g, WithObjs o)=>Vec.Vector o->Int->Rand g [o]
@@ -87,11 +90,8 @@ instance ExtraEAInfo EATrace where
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))
-evalEA p c e = do let  newInd i = let c = encode p i
-                                      o = fromList $ calObjs p i
-                                  in Individual c o
-                  p0 <- attach (empty c) . Vec.map newInd <$>
-                        (popInit e) p (sizePop c)
+evalEA p c e = do p0 <- attach (empty c) . pureBulkEval p .
+                        Vec.map (encode p) <$> (popInit e) p (sizePop c)
                   foldM' (evolve p c e) p0 [0..numGen c-1]
 
 evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
@@ -107,20 +107,23 @@ evolve p c (EAToolbox _ _mSel _eSel _br) wp cur =
 normalBreeder::Breeder
 normalBreeder p c cur mSel is =
   do s <- transpose <$> (replicateM nP $ mSel is (sizePop c `quot` nC))
-     Vec.fromList . concat <$> mapM (reproduce p c pg) s
+     pureBulkEval p . Vec.fromList . concat <$> mapM (reproduce p c pg) s
   where (nP, nC) = repMode . chrm $ Vec.head is
         pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
-reproduce::(Chromosome c, Objectives o, RandomGen g)=>
-           Problem->EASetup->Double->[Individual o c]->Rand g [Individual o c]
-reproduce p c cur is =
-  let repChrm cs = do
-        cs' <- join $ doWithProb (probCrs c) (crossover p cur) return cs
-        mapM (join . doWithProb (probMut c) (mutate p cur) return) cs'
-  in do cs' <- repChrm $ map chrm is
-        return . zipWith Individual cs' $
-          map (fromList . calObjs p . decode p) cs'
+reproduce::(Chromosome c, RandomGen g)=>
+           Problem->EASetup->Double->[Individual o c]->Rand g [c]
+reproduce p c cur is = do
+  let cs = map chrm is
+  cs' <- join $ doWithProb (probCrs c) (crossover p cur) return cs
+  mapM (join . doWithProb (probMut c) (mutate p cur) return) cs'
 
 envSelectN::(WithObjs o)=>EnvSelector->Int->Vec.Vector o->Vec.Vector o
 envSelectN sel n s = let (s0, s1) = Vec.splitAt n s
                      in sel s0 s1
+
+pureEval::(Objectives o, Chromosome c)=>Problem->c->Individual o c
+pureEval p i = Individual i . fromList . calObjs p $ decode p i
+
+pureBulkEval::(Objectives o, Chromosome c)=>Problem->Vec.Vector c->Population o c
+pureBulkEval p = Vec.map (pureEval p)
