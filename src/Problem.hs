@@ -19,7 +19,6 @@ import qualified Data.Vector         as Vec
 import qualified Data.Vector.Mutable as MVec
 import           Numeric             (showFFloat)
 
-
 type Time = Double
 type Data = Double
 
