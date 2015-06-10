@@ -8,8 +8,8 @@ arg_tags = {
 }
 
 args_defaults = {
-	"pop_size"	: 10,
-	"gen_num" 	: 5000,
+	"pop_size"	: 100,
+	"gen_num" 	: 500,
 	"prob_xo"	: 1,
 	"prob_mu"	: 1,
 }
@@ -20,18 +20,18 @@ exp_defaults = {
 }
 
 experiments = {
-	# "SPEA2-C0"	:{
-	# 	"cmd"	: "spea2_c0",
-	# },
-	# "SPEA2-C3n"	:{
+	"SPEA2-C0"	:{
+		"cmd"	: "spea2_c0",
+	},
+	# "SPEA2-C3"	:{
 	# 	"cmd"	: "spea2_c3",
 	# },
-	"NSGA2-C3"	:{
-		"cmd"	: "nsga2_c3",
-	},
-	# "SPEA2-C3r"	:{
-	# 	"cmd"	: "spea2_c3r",
+	# "NSGA2-C3"	:{
+	# 	"cmd"	: "nsga2_c3",
 	# },
+	"SPEA2-C3r"	:{
+		"cmd"	: "spea2_c3r",
+	},
 	# "SPEA2-C3sr"	:{
 	# 	"cmd"	: "spea2_c3sr",
 	# },
@@ -44,6 +44,9 @@ experiments = {
 	# "SPEA2-C3srm"	:{
 	# 	"cmd"	: "spea2_c3srm",
 	# },
+	"MOABC"	:{
+		"cmd"	: "moabc",
+	},
 	# "MOHEFT"	:{
 	# 	"times" : 1,
 	# 	"cmd"	: "moheft",
@@ -71,22 +74,22 @@ dag_pegasus = [
 	"Montage_50",
 	"Montage_100",
 	"Montage_1000",
-	"Epigenomics_24",
-	"Epigenomics_46",
-	"Epigenomics_100",
-	"Epigenomics_997_fixed",
-	"CyberShake_30",
-	"CyberShake_50",
-	"CyberShake_100",
-	"CyberShake_1000",
-	"Sipht_30",
-	"Sipht_60",
-	"Sipht_100",
-	"Sipht_1000",
-	"Inspiral_30",
-	"Inspiral_50",
-	"Inspiral_100",
-	"Inspiral_1000",
+	# "Epigenomics_24",
+	# "Epigenomics_46",
+	# "Epigenomics_100",
+	# "Epigenomics_997_fixed",
+	# "CyberShake_30",
+	# "CyberShake_50",
+	# "CyberShake_100",
+	# "CyberShake_1000",
+	# "Sipht_30",
+	# "Sipht_60",
+	# "Sipht_100",
+	# "Sipht_1000",
+	# "Inspiral_30",
+	# "Inspiral_50",
+	# "Inspiral_100",
+	# "Inspiral_1000",
 ]
 
 ## Database
@@ -98,16 +101,17 @@ db_name = "hookie-exp-test"
 query_cond = {
 	"algorithm"	: [
 		"SPEA2-C0", 
-		"SPEA2-C3",
-		"NSGA2-C3",
-		"SPEA2-C3n",           
-		"SPEA2-C3sr",                 
-		"SPEA2-C3srm",    
-		"NSGA2-C3",           
-		"MOHEFT",
-		"MLS",
+		"SPEA2-C3r",
+		# "NSGA2-C3",
+		# "SPEA2-C3",  
+		# "SPEA2-C3to",                    
+		# "SPEA2-C3sr",                 
+		# "SPEA2-C3srm",    
+		"MOABC"
+		# "MOHEFT",
+		# "MLS",
 		],
-	"pop_size" 	: [10],
+	"pop_size" 	: [100],
 }
 
 ## Hypervolume

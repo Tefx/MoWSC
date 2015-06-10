@@ -76,7 +76,7 @@ randTypeSRH p n = (liftM2 (Vec.++)) (randHEFT p 2) (randTypeSR p $ n - 2)
 randPool::PopInitialiser
 randPool p n = Vec.replicateM n $ do
   loc <- Vec.replicateM (nTask p) $ getRandomR (0, nTask p * nType p - 1)
-  return $ fromPool [0..nTask p-1] loc
+  return $! fromPool [0..nTask p-1] loc
 
 randPoolOrHeft::PopInitialiser
 randPoolOrHeft p n = (liftM2 (Vec.++)) (randHEFT p 2) (randPool p $ n - 2)

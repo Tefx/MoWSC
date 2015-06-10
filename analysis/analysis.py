@@ -6,8 +6,12 @@ from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, 
 from query import query
 
 import matplotlib as mpl
-mpl.use('Agg')
+# mpl.use('Agg')
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from itertools import chain
+
+colors = "bgrcmykw"
 
 def fetch(dag, keys, field, initNZ=None):
 	d = {}
@@ -42,13 +46,16 @@ def best_time(dag, keys):
 		d[k] = min(v)
 	return dag, d
 
-def evolve_history(dag, key):
+def evolve_history(dag, key, hv_only=True):
 	hv = HyperVolume(hv_ref)
 	d, nz = fetch(dag, keys, "trace", lambda x:x[-1])
 	t = {}
 	for k, v in d.iteritems():
 		best = max(v, key=lambda x:hv.compute(map(nz, x[-1])))
-		t[k]=[hv.compute(map(nz, x)) for x in best]
+		if hv_only:
+			t[k]=[hv.compute(map(nz, x)) for x in best]
+		else:
+			t[k] = best
 	return t
 
 def beDom(x, y):
@@ -69,7 +76,7 @@ def plot_front(d, save=None, pareto=True):
 	fig, ax = plt.subplots()
 	plt.xlabel('Time(s)')
 	plt.ylabel('Cost(\$)')
-	ax.set_xscale('log')
+	# ax.set_xscale('log')
 	# ax.set_yscale('log')
 
 	lines = []
@@ -111,6 +118,26 @@ def plot_trace(d, save=None):
 	else:
 		plt.show()
 
+def show_trace(d, save=None):
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+
+	ci = 0
+	for k, ps in d.iteritems():
+		f = lambda i, ps:[(i, x, y) for x, y in ps]
+		ps = [f(i, x) for i,x in zip(range(len(ps)), ps)]
+		ps = list(chain(*ps))
+		zs, xs, ys= zip(*ps)
+		print k
+		ax.scatter(xs, ys, zs, marker=".", color=colors[ci])
+		ci += 1
+
+	ax.set_xlabel('Time')
+	ax.set_ylabel('Cost')
+	ax.set_zlabel('Gen')
+
+	plt.show()
+
 if __name__ == '__main__':
 	from sys import argv
 	keys = ["algorithm", "pop_size"]
@@ -129,3 +156,6 @@ if __name__ == '__main__':
 	elif argv[1] == "plot_d":
 		for dag in dag_pegasus:
 			plot_front(front_objs(dag, keys), dag, False)
+	elif argv[1] == "show_trace":
+		dag = argv[2]
+		show_trace(evolve_history(dag, keys, False))

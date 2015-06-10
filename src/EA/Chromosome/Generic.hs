@@ -5,22 +5,21 @@ import           Problem              (Orders, Problem (..), Task, inp, ins,
                                        nTask)
 import           Utils.Random         (randPos)
 
-
 import           Control.Monad.Random (Rand, RandomGen, getRandomR)
 import qualified Data.HashSet         as HashSet
 import           Data.Vector          ((!), (//))
 import qualified Data.Vector          as Vec
+import qualified Data.Vector.Unboxed  as VU
 
 
 mutateOrder::RandomGen g=>Problem->Orders->Rand g Orders
 mutateOrder p s = do l <- getRandomR (0, nTask p - 1)
-                     let s' = Vec.fromList s
-                         s0 = take l s ++ drop (l+1) s
-                         t0 = s' ! l
+                     let s' = VU.fromList s
+                         t0 = (VU.!) s' l
                          si = findNonPred p s' t0 l
                          ei = findNonSucc p s' t0 l
                      l' <- getRandomR (si, ei)
-                     return $ (take l' s0) ++ t0:(drop l' s0)
+                     return $! moveTask t0 l l' s
 
 crossoverOrder::RandomGen g=>Problem->Orders->Orders->Rand g [Orders]
 crossoverOrder p s0 s1 = do
@@ -33,16 +32,27 @@ crossoverOrder p s0 s1 = do
       s1' = sf1 ++ filter (not . flip HashSet.member set1) s0
   return $ [s0', s1']
 
-findNonSucc::Problem->Vec.Vector Task->Task->Task->Task
+_removeItem::Int->[Task]->[Task]
+_removeItem 0 (x:xs) = xs
+_removeItem i (x:xs) = x:_removeItem (i-1) xs
+
+_insertItem::Task->Int->[Task]->[Task]
+_insertItem t 0 xs = t:xs
+_insertItem t i (x:xs) = x:_insertItem t (i-1) xs
+
+moveTask::Task->Int->Int->[Task]->[Task]
+moveTask t i j s = _insertItem t j $! _removeItem i s
+
+findNonSucc::Problem->VU.Vector Task->Task->Task->Task
 findNonSucc p s task cur
   | cur == nTask p = cur-1
-  | ins p (s ! cur) task = cur-1
+  | ins p ((VU.!) s cur) task = cur-1
   | otherwise = findNonSucc p s task (cur+1)
 
-findNonPred::Problem->Vec.Vector Task->Task->Task->Task
+findNonPred::Problem->VU.Vector Task->Task->Task->Task
 findNonPred p s task cur
   | cur < 0 = cur+1
-  | inp p (s ! cur) task = cur+1
+  | inp p ((VU.!) s cur) task = cur+1
   | otherwise = findNonPred p s task (cur-1)
 
 onePointCrossover::RandomGen g=>Vec.Vector a->Vec.Vector a->Rand g [Vec.Vector a]

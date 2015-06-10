@@ -3,7 +3,7 @@
 
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
-          , normalBreeder
+          , normalBreeder, abcBreeder
           , envSelectN
           , EAToolbox (..)
           , EASetup (..)
@@ -13,7 +13,7 @@ module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
           , Chromosome (..)
           , NullInfo (..), EATrace (..)) where
 
-import           Control.Monad        (join, replicateM)
+import           Control.Monad        (join, liftM, replicateM)
 import           Control.Monad.Random (Rand, RandomGen)
 import           Data.Function        (on)
 import           Data.Functor         ((<$>))
@@ -21,6 +21,7 @@ import           Data.List            (transpose)
 import           Data.Vector          ((//))
 import qualified Data.Vector          as Vec
 
+import           Control.DeepSeq      (deepseq)
 import           MOP                  (ObjValue, Objectives (..), WithObjs (..))
 import           Problem
 import           Utils
@@ -79,11 +80,12 @@ instance ExtraEAInfo NullInfo where
 newtype EATrace = EATrace {trace::Vec.Vector (Vec.Vector [ObjValue])}
 
 instance ExtraEAInfo EATrace where
-  empty c = EATrace . Vec.replicate (numGen c `quot` 10) $ Vec.singleton []
+  empty c = EATrace . Vec.replicate 50 $ Vec.singleton []
   update p c pop cur i@(EATrace trc)
-    | cur `rem` 10 == 0 = let objs = Vec.map (toList . getObjs) pop
-                          in EATrace $ trc // [(cur `quot` 10, objs)]
+    | cur `rem` step == 0 = let objs = Vec.map (toList . getObjs) pop
+                            in EATrace $ trc // [(cur `quot` step, objs)]
     | otherwise = i
+    where step = numGen c `quot` 50
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))
@@ -102,7 +104,7 @@ evolve p c (EAToolbox _ _mSel _eSel _br) wp cur =
   do let pop = original wp
      pop' <- _eSel pop <$> _br p c cur _mSel pop
      let info = update p c pop' cur $ attached wp
-     return $! attach info pop'
+     info `seq` (return $ attach info pop')
 
 normalBreeder::Breeder
 normalBreeder p c cur mSel is =
@@ -117,10 +119,20 @@ reproduce p c cur is =
   let repChrm cs = do
         cs' <- join $ doWithProb (probCrs c) (crossover p cur) return cs
         mapM (join . doWithProb (probMut c) (mutate p cur) return) cs'
-  in do cs' <- repChrm $ map chrm is
-        return . zipWith Individual cs' $
-          map (fromList . calObjs p . decode p) cs'
+  in liftM (map (evalInd p)) . repChrm $ map chrm is
+
+abcBreeder::Breeder
+abcBreeder p c cur mSel is =
+  do is0 <- Vec.mapM rep is
+     s <- Vec.fromList <$> mSel is0 (sizePop c)
+     is1 <- Vec.mapM rep s
+     return $ (Vec.++) is0 is1
+  where pg = (fromIntegral cur /) . fromIntegral $ numGen c
+        rep = liftM (evalInd p) .  mutate p pg . chrm
 
 envSelectN::(WithObjs o)=>EnvSelector->Int->Vec.Vector o->Vec.Vector o
 envSelectN sel n s = let (s0, s1) = Vec.splitAt n s
                      in sel s0 s1
+
+evalInd::(Objectives o, Chromosome c)=>Problem->c->Individual o c
+evalInd p c = Individual c . fromList . calObjs p $ decode p c

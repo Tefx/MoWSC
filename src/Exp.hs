@@ -53,7 +53,7 @@ import           EA                            (Chromosome, EASetup (..),
                                                 EAToolbox (..), EATrace (..),
                                                 ExtraEAInfo, Individual,
                                                 NullInfo (..), PopInitialiser,
-                                                Population, evalEA,
+                                                Population, abcBreeder, evalEA,
                                                 normalBreeder)
 import           EA.Chromosome                 (C0, C1, C2, C3, C3i, C4)
 import           EA.Init
@@ -132,10 +132,13 @@ process args = do
     "nsga2_c3" -> dumpRes . runEA g $ eaNSGA2_C3 p ec
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
+    "spea2_c3r" -> dumpRes . runEA g $ eaSPEA2_C3r p ec
     "spea2_c3sr" -> dumpRes . runEA g $ eaSPEA2_C3sr p ec
     "spea2_c3h2" -> dumpRes . runEA g $ eaSPEA2_C3h2 p ec
     "spea2_c3mls" -> dumpRes . runEA g $ eaSPEA2_C3mls p ec
     "spea2_c3srm" -> dumpRes . runEA g $ eaSPEA2_C3srm p ec
+
+    "moabc" -> dumpRes . runEA g $ eaMOABC p ec
 
 main = process =<< cmdArgs ea
 
@@ -177,11 +180,18 @@ spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , envSel = spea2Select
                                      , breeder = normalBreeder}
 
+abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
+abc i p c = evalEA p c' $ EAToolbox { popInit = i
+                                    , mutSel = rouletteSelGen assignSPEA2Fit
+                                    , envSel = spea2Select
+                                    , breeder = abcBreeder}
+  where c' = c{numGen=numGen c `quot` 2}
+
 eaNSGA2_C3::ExpType MakespanCost C3
 eaNSGA2_C3 = nsga2 randTypeSRH
 
 eaSPEA2_C0::ExpType MakespanCost C0
-eaSPEA2_C0 = spea2 randPool
+eaSPEA2_C0 = spea2 randPoolOrHeft
 
 eaSPEA2_C3::ExpType MakespanCost C3
 eaSPEA2_C3 = spea2 randTypeSRH
@@ -200,3 +210,6 @@ eaSPEA2_C3mls = spea2 randMLS
 
 eaSPEA2_C3srm::ExpType MakespanCost C3
 eaSPEA2_C3srm = spea2 randTypeSROrMLS
+
+eaMOABC::ExpType MakespanCost C0
+eaMOABC = abc randPoolOrHeft
