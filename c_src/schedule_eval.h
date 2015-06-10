@@ -1,30 +1,19 @@
 typedef struct {
-    int *pds;
-    int np;
+    int num;
+    int *parents;
 } Preds;
 
 typedef struct {
-    int n_task;
-    int n_type;
-    float *reft;
-    Preds *preds;
-    float *prices;
-    float *cus;
+    int num_task;
+    int num_type;
+    double* ref_time;
+    double* prices;
+    double* cus;
+    Preds* preds;
 } Problem;
 
-typedef struct {
-    int n_ins;
-    int *order;
-    int *t2i;
-    int *i2t;
-} Schedule;
-
-typedef struct {
-    float makespan;
-    float cost;
-} Objs;
-
-void eval(Problem*, Schedule*, Objs*);
-void bulk_eval(Problem*, int, Schedule**, Objs**);
-
-void debug(Problem*, Schedule*);
+void init_problem(int n_tasks, int n_types);
+void setup_service(double* prices, double* cus);
+void setup_tasks(double* ref_time);
+void setup_preds(int no, int n, int* parents);
+void finish_problem();

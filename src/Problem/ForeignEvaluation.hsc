@@ -11,7 +11,7 @@ import qualified Problem              as P
 data CPreds = CPreds { ps :: Ptr CInt
                      , np :: CInt}
 
-data CProblem = CProblem { nTask   : : CInt
+data CProblem = CProblem { nTask   :: CInt
                          , nType   :: CInt
                          , refTime :: Ptr CFloat
                          , preds   :: Ptr CPreds

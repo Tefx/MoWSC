@@ -85,6 +85,8 @@ import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 typFile, (&=))
 import           System.Random.Mersenne.Pure64 (PureMT, newPureMT)
 
+import           Problem.Foreign
+
 
 data Exp = Exp { alg     :: String
                , limit   :: Int
@@ -120,6 +122,7 @@ process args = do
                    , probCrs = pcr $ args
                    , probMut = pmu $ args}
       kstep = (1.0/) . fromIntegral $ popsize args - 1
+  setupProblem p
   BL.putStrLn $
     case alg $ args of
 
@@ -136,6 +139,7 @@ process args = do
     "spea2_c3h2" -> dumpRes . runEA g $ eaSPEA2_C3h2 p ec
     "spea2_c3mls" -> dumpRes . runEA g $ eaSPEA2_C3mls p ec
     "spea2_c3srm" -> dumpRes . runEA g $ eaSPEA2_C3srm p ec
+  finishProblem
 
 main = process =<< cmdArgs ea
 

@@ -13,21 +13,18 @@ module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
           , Chromosome (..)
           , NullInfo (..), EATrace (..)) where
 
-import           Control.Monad             (join, replicateM)
-import           Control.Monad.Random      (Rand, RandomGen)
-import           Data.Function             (on)
-import           Data.Functor              ((<$>))
-import           Data.List                 (transpose)
-import           Data.Vector               ((//))
-import qualified Data.Vector               as Vec
+import           Control.Monad        (join, replicateM)
+import           Control.Monad.Random (Rand, RandomGen)
+import           Data.Function        (on)
+import           Data.Functor         ((<$>))
+import           Data.List            (transpose)
+import           Data.Vector          ((//))
+import qualified Data.Vector          as Vec
 
-import           MOP                       (ObjValue, Objectives (..),
-                                            WithObjs (..))
+import           MOP                  (ObjValue, Objectives (..), WithObjs (..))
 import           Problem
 import           Utils
-import           Utils.Random              (doWithProb)
-
-import           Problem.ForeignEvaluation
+import           Utils.Random         (doWithProb)
 
 type Population o c = Vec.Vector (Individual o c)
 type MutSelector = (RandomGen g, WithObjs o)=>Vec.Vector o->Int->Rand g [o]

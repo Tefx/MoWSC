@@ -10,4 +10,5 @@ executable MoWSC-exp
     buildable: True
     hs-source-dirs: src
     include-dirs: c_src
-    other-modules: Problem.ForeignEvaluation
+    extra-lib-dirs: c_src
+    extra-libraries: schedule_eval
