@@ -54,7 +54,7 @@ import           EA                            (Chromosome, EASetup (..),
                                                 ExtraEAInfo, Individual,
                                                 NullInfo (..), PopInitialiser,
                                                 Population, evalEA,
-                                                normalBreeder)
+                                                normalBreeder, normalBreederF)
 import           EA.Chromosome                 (C0, C1, C2, C3, C3i, C4)
 import           EA.Init
 import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
@@ -68,8 +68,7 @@ import           Heuristic.MLS                 (mls)
 import           Heuristic.MOHEFT              (moheft)
 import           MOP                           (MakespanCost, ObjValue,
                                                 Objectives, getObjs, toList)
-import           Problem                       (Problem (Prob), calObjs, nTask,
-                                                nType)
+import           Problem                       (Problem (Prob), nTask, nType)
 import           Problem.DAG.Pegasus           as Pegasus
 import           Problem.DAG.Random            as RandDAG
 import           Problem.Service.EC2           as EC2
@@ -85,8 +84,8 @@ import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 typFile, (&=))
 import           System.Random.Mersenne.Pure64 (PureMT, newPureMT)
 
-import           Problem.Foreign
-
+import           Problem.Foreign               (computeObjs, finishProblem,
+                                                setupProblem)
 
 data Exp = Exp { alg     :: String
                , limit   :: Int
@@ -125,12 +124,11 @@ process args = do
   setupProblem p
   BL.putStrLn $
     case alg $ args of
-
-    "heft"     -> dumpRes . (NullInfo,) $ map (calObjs p) [heft p]
-    "cheap"    -> dumpRes . (NullInfo,) $ map (calObjs p) [cheap p]
-    "hbcs"     -> dumpRes . (NullInfo,) . map (calObjs p . hbcs p) $ tail [0, kstep..1]
-    "moheft"   -> dumpRes . (NullInfo,) . map (calObjs p) . moheft p $ popsize args
-    "mls"      -> dumpRes . (NullInfo,) . map (calObjs p) . mls p $ popsize args
+    "heft"     -> dumpRes . (NullInfo,) $ map computeObjs [heft p]
+    "cheap"    -> dumpRes . (NullInfo,) $ map computeObjs [cheap p]
+    "hbcs"     -> dumpRes . (NullInfo,) . map (computeObjs . hbcs p) $ tail [0, kstep..1]
+    "moheft"   -> dumpRes . (NullInfo,) . map computeObjs . moheft p $ popsize args
+    "mls"      -> dumpRes . (NullInfo,) . map computeObjs . mls p $ popsize args
 
     "nsga2_c3" -> dumpRes . runEA g $ eaNSGA2_C3 p ec
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
@@ -173,13 +171,13 @@ nsga2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 nsga2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , mutSel = tournamentSelGen
                                      , envSel = nsga2Select
-                                     , breeder = normalBreeder}
+                                     , breeder = normalBreederF}
 
 spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , mutSel = nullSelGen
                                      , envSel = spea2Select
-                                     , breeder = normalBreeder}
+                                     , breeder = normalBreederF}
 
 eaNSGA2_C3::ExpType MakespanCost C3
 eaNSGA2_C3 = nsga2 randTypeSRH

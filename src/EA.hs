@@ -3,7 +3,7 @@
 
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
-          , normalBreeder
+          , normalBreeder, normalBreederF
           , envSelectN
           , EAToolbox (..)
           , EASetup (..)
@@ -23,6 +23,7 @@ import qualified Data.Vector          as Vec
 
 import           MOP                  (ObjValue, Objectives (..), WithObjs (..))
 import           Problem
+import           Problem.Foreign      (computeObjs)
 import           Utils
 import           Utils.Random         (doWithProb)
 
@@ -108,6 +109,13 @@ normalBreeder p c cur mSel is =
   where (nP, nC) = repMode . chrm $ Vec.head is
         pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
+normalBreederF::Breeder
+normalBreederF p c cur mSel is =
+  do s <- transpose <$> (replicateM nP $ mSel is (sizePop c `quot` nC))
+     cBulkEval p . Vec.fromList . concat <$> mapM (reproduce p c pg) s
+  where (nP, nC) = repMode . chrm $ Vec.head is
+        pg = (fromIntegral cur /) . fromIntegral $ numGen c
+
 reproduce::(Chromosome c, RandomGen g)=>
            Problem->EASetup->Double->[Individual o c]->Rand g [c]
 reproduce p c cur is = do
@@ -124,3 +132,9 @@ pureEval p i = Individual i . fromList . calObjs p $ decode p i
 
 pureBulkEval::(Objectives o, Chromosome c)=>Problem->Vec.Vector c->Population o c
 pureBulkEval p = Vec.map (pureEval p)
+
+cEval::(Objectives o, Chromosome c)=>Problem->c->Individual o c
+cEval p i = Individual i . fromList . computeObjs $ decode p i
+
+cBulkEval::(Objectives o, Chromosome c)=>Problem->Vec.Vector c->Population o c
+cBulkEval p = Vec.map (cEval p)
