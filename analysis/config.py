@@ -8,20 +8,21 @@ arg_tags = {
 }
 
 args_defaults = {
-    "pop_size" : 20,
-    "gen_num" : 2000,
+    "pop_size" : 15,
+    "gen_num" : 10000,
     "prob_xo" : 1,
     "prob_mu" : 1,
 }
 
 exp_defaults = {
-    "times" : 2,
+    "times" : 4,
     "args" : {}
 }
 
 experiments = {
     "SPEA2-C0":{"cmd":"spea2_c0",},
     "SPEA2-C3":{"cmd":"spea2_c3",},
+    "MOCBD":{"cmd":"moabc"},
     "MOHEFT":{"times":1,"cmd":"moheft"},
     "HBCS":{"times":1,"cmd":"hbcs"},
 }
@@ -63,10 +64,11 @@ query_cond = {
     "algorithm" : [
         "SPEA2-C0",
         "SPEA2-C3",
-        "HBCS",
-        "MOHEFT",
+        # "HBCS",
+        # "MOHEFT",
+        "MOCBD",
     ],
-    "pop_size" : [20],
+    "pop_size" : [15],
 }
 
 ## Hypervolume

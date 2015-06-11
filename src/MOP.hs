@@ -6,12 +6,13 @@ module MOP ( Objectives (..), WithObjs (..)
            , MakespanCost
            , ObjValue) where
 
-import qualified Data.Vector as Vec
-import           Numeric     (showFFloat)
+import           Control.DeepSeq (NFData (..))
+import qualified Data.Vector     as Vec
+import           Numeric         (showFFloat)
 
 type ObjValue = Double
 
-class (Show a)=>Objectives a where
+class (Show a, NFData a)=>Objectives a where
   dimesion :: a->Int
   (@!)     :: a->Int->ObjValue
   (<<<)    :: a->a->Bool
@@ -40,6 +41,9 @@ norm nz i = let _norm x y z = (x-y)/z
 
 data MakespanCost = MC { makespan :: Double
                        , cost     :: Double}
+
+instance NFData MakespanCost where
+  rnf (MC m c) = rnf m `seq` rnf c
 
 instance Show MakespanCost where
   show a = showFFloat (Just 2) (makespan a) " " ++ showFFloat (Just 2) (cost a) ""

@@ -3,7 +3,7 @@
 
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
-          , normalBreeder, abcBreeder, normalBreederF
+          , normalBreeder, abcBreeder, normalBreederF ,normalBreederP
           , envSelectN
           , EAToolbox (..)
           , EASetup (..)
@@ -13,20 +13,24 @@ module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
           , Chromosome (..)
           , NullInfo (..), EATrace (..)) where
 
-import           Control.Monad        (join, liftM, replicateM)
-import           Control.Monad.Random (Rand, RandomGen)
-import           Data.Function        (on)
-import           Data.Functor         ((<$>))
-import           Data.List            (transpose)
-import           Data.Vector          ((//))
-import qualified Data.Vector          as Vec
+import           Control.DeepSeq             (NFData (..), force)
+import           Control.Monad               (join, liftM, replicateM)
+import           Control.Monad.Random        (Rand, RandomGen)
+import           Control.Parallel            (par, pseq)
+import           Control.Parallel.Strategies (Strategy (..), parListChunk,
+                                              rdeepseq, using)
+import           Data.Function               (on)
+import           Data.Functor                ((<$>))
+import           Data.List                   (transpose)
+import           Data.Vector                 ((//))
+import qualified Data.Vector                 as Vec
 
-import           Control.DeepSeq      (deepseq)
-import           MOP                  (ObjValue, Objectives (..), WithObjs (..))
+import           MOP                         (ObjValue, Objectives (..),
+                                              WithObjs (..))
 import           Problem
-import           Problem.Foreign      (computeObjs)
+import           Problem.Foreign             (computeObjs)
 import           Utils
-import           Utils.Random         (doWithProb)
+import           Utils.Random                (doWithProb)
 
 type Population o c = Vec.Vector (Individual o c)
 type MutSelector = (RandomGen g, WithObjs o)=>Vec.Vector o->Int->Rand g [o]
@@ -55,7 +59,10 @@ instance (Objectives o)=>WithObjs (Individual o c) where
   type Objs (Individual o c) = o
   getObjs = _objs
 
-class Chromosome a where
+instance (NFData o, NFData c)=>NFData (Individual o c) where
+  rnf (Individual o c) = rnf o `seq` rnf c
+
+class (NFData a)=>Chromosome a where
   repMode::a->(Int, Int)
   crossover::(RandomGen g)=>Problem->Double->[a]->Rand g [a]
   mutate::(RandomGen g)=>Problem->Double->a->Rand g a
@@ -111,6 +118,20 @@ normalBreeder p c cur mSel is =
   where (nP, nC) = repMode . chrm $ Vec.head is
         pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
+normalBreederF::Breeder
+normalBreederF p c cur mSel is =
+  do s <- transpose <$> (replicateM nP $ mSel is (sizePop c `quot` nC))
+     cBulkEval p . Vec.fromList . concat <$> mapM (reproduce p c pg) s
+  where (nP, nC) = repMode . chrm $ Vec.head is
+        pg = (fromIntegral cur /) . fromIntegral $ numGen c
+
+normalBreederP::Breeder
+normalBreederP p c cur mSel is =
+  do s <- transpose <$> (replicateM nP $ mSel is (sizePop c `quot` nC))
+     parBulkEval p . Vec.fromList . concat <$> mapM (reproduce p c pg) s
+  where (nP, nC) = repMode . chrm $ Vec.head is
+        pg = (fromIntegral cur /) . fromIntegral $ numGen c
+
 abcBreeder::Breeder
 abcBreeder p c cur mSel is =
   do is0 <- Vec.mapM rep is
@@ -119,13 +140,6 @@ abcBreeder p c cur mSel is =
      return $ (Vec.++) is0 is1
   where pg = (fromIntegral cur /) . fromIntegral $ numGen c
         rep = liftM (cEval p) .  mutate p pg . chrm
-
-normalBreederF::Breeder
-normalBreederF p c cur mSel is =
-  do s <- transpose <$> (replicateM nP $ mSel is (sizePop c `quot` nC))
-     cBulkEval p . Vec.fromList . concat <$> mapM (reproduce p c pg) s
-  where (nP, nC) = repMode . chrm $ Vec.head is
-        pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
 reproduce::(Chromosome c, RandomGen g)=>
            Problem->EASetup->Double->[Individual o c]->Rand g [c]
@@ -149,3 +163,9 @@ cEval p i = Individual i . fromList . computeObjs $ decode p i
 
 cBulkEval::(Objectives o, Chromosome c)=>Problem->Vec.Vector c->Population o c
 cBulkEval p = Vec.map (cEval p)
+
+parBulkEval::(Objectives o, Chromosome c)=>Problem->Vec.Vector c->Population o c
+parBulkEval p s = Vec.map (cEval p) s `using` (parVector 25)
+
+parVector :: NFData a => Int -> Strategy (Vec.Vector a)
+parVector n = liftM Vec.fromList . parListChunk n rdeepseq . Vec.toList

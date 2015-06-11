@@ -8,6 +8,7 @@ import           Problem               (Ins, InsType, Orders, Problem,
                                         Schedule (Schedule), Task, nTask, nType)
 import           Utils.Random          (choose, choose, doWithProb, randPos)
 
+import           Control.DeepSeq       (NFData (..))
 import           Control.Monad         (join)
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
 import           Data.Function         (on)
@@ -18,6 +19,9 @@ import qualified Data.Vector           as Vec
 
 data Host = Host { _type  :: InsType
                  , _tasks :: IntSet.IntSet}
+
+instance NFData Host where
+  rnf (Host p t) = rnf p `seq` rnf t
 
 mergeHosts::(Host, Host)->InsType->Host
 mergeHosts (Host t0 ts0, Host t1 ts1) t = Host t $ IntSet.union ts0 ts1
@@ -45,6 +49,9 @@ _typeMutate p (Host t ts) = flip Host ts <$> getRandomR (0, nType p-1)
 
 data C3 = C3 { _order :: Orders
              , _inss  :: Vec.Vector Host}
+
+instance NFData C3 where
+  rnf (C3 o i) = rnf o `seq` rnf i
 
 instance Chromosome C3 where
   repMode _ = (1, 1)

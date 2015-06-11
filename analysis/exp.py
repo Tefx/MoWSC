@@ -59,7 +59,7 @@ if __name__ == '__main__':
                         print "Initialising database.."
                         init_db()
         else:
-                pool = Pool(2)
+                pool = Pool(cpu_count())
                 for dag in dag_pegasus:
                         for exp, conf in experiments.iteritems():
                                 for cmd, conf in gen_cmd(dag, exp, conf):
