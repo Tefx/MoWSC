@@ -11,4 +11,4 @@ executable MoWSC-exp
     hs-source-dirs: src
     include-dirs: c_src
     extra-lib-dirs: c_src
-    extra-libraries: schedule_eval
+    extra-libraries: evaluation, spea2

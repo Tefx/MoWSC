@@ -86,7 +86,8 @@ instance ExtraEAInfo EATrace where
     | cur `rem` step == 0 = let objs = Vec.map (toList . getObjs) pop
                             in EATrace $ trc // [(cur `quot` step, objs)]
     | otherwise = i
-    where step = numGen c `quot` 50
+    where step = let k = numGen c `quot` 50
+                 in if k == 0 then 1 else k
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))

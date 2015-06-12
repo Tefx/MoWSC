@@ -1,22 +1,24 @@
+# include <stddef.h>
+
 typedef struct {
-    int num;
+    size_t num;
     int *parents;
 } Preds;
 
 typedef struct {
-    int num_task;
-    int num_type;
+    size_t num_task;
+    size_t num_type;
     double* ref_time;
     double* prices;
     double* cus;
     Preds* preds;
 } Problem;
 
-void init_problem(int n_tasks, int n_types);
+void init_problem(size_t n_tasks, size_t n_types);
 void setup_service(double* prices, double* cus);
 void setup_tasks(double* ref_time);
-void setup_preds(int no, int n, int* parents);
-void finish_problem();
+void setup_preds(size_t no, size_t n, int* parents);
+void finish_problem(void);
 
-void compute_objs(int* order, int* task2ins, int num_ins, int* ins2type,
+void compute_objs(int* order, int* task2ins, size_t num_ins, int* ins2type,
                   double* makespan, double* cost);

@@ -46,7 +46,7 @@ type SPEA2Fit = Double
 
 calS::(WithObjs o)=>Vec.Vector o->Vec.Vector (o, Int)
 calS pop = Vec.map (\x->(x,) . Vec.length $
-                        Vec.filter ((<<<) (getObjs x) . getObjs) pop) pop
+                        Vec.filter (((getObjs x) <<<) . getObjs) pop) pop
 
 calRaw::(WithObjs o)=>Vec.Vector (o, Int)->Vec.Vector Int
 calRaw is = Vec.map (\(x, _)->Vec.sum . Vec.map snd $

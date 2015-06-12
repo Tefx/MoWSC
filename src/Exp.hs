@@ -53,9 +53,10 @@ import           EA                            (Chromosome, EASetup (..),
                                                 EAToolbox (..), EATrace (..),
                                                 ExtraEAInfo, Individual,
                                                 NullInfo (..), PopInitialiser,
-                                                Population, evalEA,
+                                                Population, abcBreeder, evalEA,
                                                 normalBreeder, normalBreederF)
 import           EA.Chromosome                 (C0, C1, C2, C3, C3i, C4)
+import qualified EA.Foreign                    as EF
 import           EA.Init
 import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
 import           EA.Selection                  (nullSelGen, rouletteSelGen,
@@ -68,7 +69,8 @@ import           Heuristic.MLS                 (mls)
 import           Heuristic.MOHEFT              (moheft)
 import           MOP                           (MakespanCost, ObjValue,
                                                 Objectives, getObjs, toList)
-import           Problem                       (Problem (Prob), calObjs, nTask,nType
+import           Problem                       (Problem (Prob), calObjs, nTask,
+                                                nType)
 import           Problem.DAG.Pegasus           as Pegasus
 import           Problem.DAG.Random            as RandDAG
 import           Problem.Service.EC2           as EC2
@@ -79,13 +81,12 @@ import           Data.Aeson                    (ToJSON, encode)
 import qualified Data.ByteString.Lazy.Char8    as BL
 import qualified Data.Vector                   as Vec
 import           GHC.Generics                  (Generic)
+import           Problem.Foreign               (computeObjs, finishProblem,
+                                                setupProblem)
 import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 def, help, name, summary, typ,
                                                 typFile, (&=))
 import           System.Random.Mersenne.Pure64 (PureMT, newPureMT)
-
-import           Problem.Foreign               (computeObjs, finishProblem,
-                                                setupProblem)
 
 data Exp = Exp { alg     :: String
                , limit   :: Int
@@ -137,9 +138,9 @@ process args = do
     "spea2_c3h2" -> dumpRes . runEA g $ eaSPEA2_C3h2 p ec
     "spea2_c3mls" -> dumpRes . runEA g $ eaSPEA2_C3mls p ec
     "spea2_c3srm" -> dumpRes . runEA g $ eaSPEA2_C3srm p ec
+    "moabc" -> dumpRes . runEA g $ eaMOABC p ec
   finishProblem
 
-    "moabc" -> dumpRes . runEA g $ eaMOABC p ec
 
 main = process =<< cmdArgs ea
 
@@ -179,7 +180,7 @@ spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , mutSel = nullSelGen
                                      , envSel = spea2Select
-                                     , breeder = normalBreeder}
+                                     , breeder = normalBreederF}
 
 abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 abc i p c = evalEA p c' $ EAToolbox { popInit = i

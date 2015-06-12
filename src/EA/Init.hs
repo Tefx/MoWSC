@@ -68,7 +68,7 @@ extreme p = Vec.fromList [fastest p, cheapest p]
 
 randTypeSR::PopInitialiser
 randTypeSR p n = (liftM2 (Vec.++)) (randTypeR p m) (randTypeSingle p m)
-  where m = div n 2
+   where m = div n 2
 
 randTypeSRH::PopInitialiser
 randTypeSRH p n = (liftM2 (Vec.++)) (randHEFT p 2) (randTypeSR p $ n - 2)

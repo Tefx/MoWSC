@@ -6,7 +6,7 @@ from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, 
 from query import query
 
 import matplotlib as mpl
-# mpl.use('Agg')
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from itertools import chain
@@ -76,7 +76,7 @@ def plot_front(d, save=None, pareto=True):
 	fig, ax = plt.subplots()
 	plt.xlabel('Time(s)')
 	plt.ylabel('Cost(\$)')
-	# ax.set_xscale('log')
+	ax.set_xscale('log')
 	# ax.set_yscale('log')
 
 	lines = []
@@ -87,7 +87,7 @@ def plot_front(d, save=None, pareto=True):
 			v = pareto_filter(v)
 		ps = sorted(v, key=lambda x: (x[0], x[1]))
 		x, y = zip(*ps)
-		if pareto: 
+		if pareto:
 			mark = ".-"
 		else:
 			mark = "."

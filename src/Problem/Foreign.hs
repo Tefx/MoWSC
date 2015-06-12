@@ -16,12 +16,12 @@ import           System.IO.Unsafe      (unsafePerformIO)
 import           Problem               (Problem, Schedule (..), cu, insPrice,
                                         nTask, nType, preds, refTime)
 
-foreign import ccall "schedule_eval.h init_problem" initProblem::CInt->CInt->IO ()
-foreign import ccall "schedule_eval.h finish_problem" finishProblem::IO()
-foreign import ccall "schedule_eval.h setup_service" setupService::Ptr CDouble->Ptr CDouble->IO()
-foreign import ccall "schedule_eval.h setup_tasks" setupTasks::Ptr CDouble->IO()
-foreign import ccall "schedule_eval.h setup_preds" setupPreds::CInt->CInt->Ptr CInt->IO()
-foreign import ccall "schedule_eval.h compute_objs" c_computeObjs::Ptr CInt->Ptr CInt->CInt->Ptr CInt->Ptr CDouble->Ptr CDouble->IO ()
+foreign import ccall "evaluation.h init_problem" initProblem::CSize->CSize->IO ()
+foreign import ccall "evaluation.h finish_problem" finishProblem::IO()
+foreign import ccall "evaluation.h setup_service" setupService::Ptr CDouble->Ptr CDouble->IO()
+foreign import ccall "evaluation.h setup_tasks" setupTasks::Ptr CDouble->IO()
+foreign import ccall "evaluation.h setup_preds" setupPreds::CSize->CSize->Ptr CInt->IO()
+foreign import ccall "evaluation.h compute_objs" c_computeObjs::Ptr CInt->Ptr CInt->CSize->Ptr CInt->Ptr CDouble->Ptr CDouble->IO ()
 
 setupProblem::Problem->IO()
 setupProblem p = do
