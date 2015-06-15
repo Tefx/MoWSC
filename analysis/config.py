@@ -21,8 +21,8 @@ exp_defaults = {
 
 experiments = {
     # "SPEA2-C0":{"cmd":"spea2_c0",},
-    "SPEA2-C3-ps":{"cmd":"spea2_c3",},
-    # "NSGA2-C3":{"cmd":"nsga2_c3"},
+    "SPEA2-C3":{"cmd":"spea2_c3",},
+    "NSGA2-C3":{"cmd":"nsga2_c3"},
     # "MOHEFT":{"times":1,"cmd":"moheft"},
     # "HBCS":{"times":1,"cmd":"hbcs"},
 }
@@ -64,7 +64,6 @@ query_cond = {
     "algorithm" : [
         "SPEA2-C0",
         "SPEA2-C3",
-        "SPEA2-C3-ps",
         "NSGA2-C3",
         # "HBCS",
         # "MOHEFT",

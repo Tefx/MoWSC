@@ -179,7 +179,7 @@ nsga2 i p c = evalEA p c $ EAToolbox { popInit = i
 spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , mutSel = nullSelGen
-                                     , envSel = spea2Select
+                                     , envSel = EF.spea2Select
                                      , breeder = normalBreederF}
 
 abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c

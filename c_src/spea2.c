@@ -17,12 +17,12 @@ int cmp_fit(const void* pi, const void* pj, void* c);
 void normalise(double* ls, size_t n);
 
 bool less_by_nearest(double* a, double* b, size_t n);
-void remove_distance(double* xs, double* ys, size_t n, size_t k, double* dis, bool* sel);
+void remove_distance(size_t n, size_t k, double* dis, bool* sel);
 
 void compute_distances(double* xs, double* ys, size_t n, double* dis);
 void compute_fitness(double* xs, double* ys, size_t n, double* dis, double* fit);
 
-void spea2_tunc(bool* sel, double* dis, size_t n, double* xs, double* ys);
+void spea2_tunc(bool* sel, double* dis, size_t n);
 
 void spea2_select_2d(double* xs, double* ys, size_t n, size_t m, int* res){
     double* fit = (double*)malloc(sizeof(double)*n);
@@ -60,10 +60,10 @@ void spea2_select_2d(double* xs, double* ys, size_t n, size_t m, int* res){
     } else {
         for (size_t i=0;i<n;i++)
             if (!sel[i]){
-                remove_distance(xs, ys, n, i, dis, sel);
+                remove_distance(n, i, dis, sel);
             }
         for (size_t i=0;i<n_sel-m;i++)
-            spea2_tunc(sel, dis, n, xs, ys);
+            spea2_tunc(sel, dis, n);
     }
 
     for (size_t i=0,j=0;i<n;i++)
@@ -108,7 +108,7 @@ void compute_fitness(double* xs, double* ys, size_t n, double* dis, double* fit)
     free(s);
 }
 
-void spea2_tunc(bool* sel, double* dis, size_t n, double* xs, double* ys){
+void spea2_tunc(bool* sel, double* dis, size_t n){
     size_t worst = 0;
 
     while (!sel[worst]) worst++;
@@ -118,7 +118,7 @@ void spea2_tunc(bool* sel, double* dis, size_t n, double* xs, double* ys){
             worst = i;
 
     sel[worst] = false;
-    remove_distance(xs, ys, n, worst, dis, sel);
+    remove_distance(n, worst, dis, sel);
 }
 
 bool pareto_dominate_2d(double x0, double y0, double x1, double y1){
@@ -139,8 +139,7 @@ int cmp_double(const void* pa, const void* pb){
 
     if (fabs(a-b)<=ZERO)
         return 0;
-
-    if (a<b)
+    else if (a<b)
         return -1;
     else
         return 1;
@@ -176,13 +175,12 @@ double distance(double x0, double y0, double x1, double y1){
     return sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
 }
 
-void remove_distance(double* xs, double* ys, size_t n, size_t k, double* dis, bool* sel){
+void remove_distance(size_t n, size_t k, double* dis, bool* sel){
     double* d;
     double* l;
 
     for (size_t i=0; i<n; i++)
         if (sel[i]){
-            //d = distance(xs[i], ys[i], xs[k], ys[k]);
             d = dis+n*n+i*n+k;
             l = dis+i*n+n-1;
             while (cmp_double(l, d)!=0) l--;

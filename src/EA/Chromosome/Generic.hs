@@ -13,7 +13,7 @@ import qualified Data.Vector.Unboxed  as VU
 
 
 mutateOrder::RandomGen g=>Problem->Orders->Rand g Orders
-mutateOrder p s = do l <- getRandomR (0, nTask p - 1)
+ mutateOrder p s = do l <- getRandomR (0, nTask p - 1)
                      let s' = VU.fromList s
                          t0 = (VU.!) s' l
                          si = findNonPred p s' t0 l
