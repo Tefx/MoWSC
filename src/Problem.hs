@@ -30,13 +30,13 @@ type Orders = [Task]
 
 class Workflow w where
   w_preds::w->Task->[Task]
+  w_preds w t = filter (\x->w_hasEdge w x t) [0..w_nTask w-1]
+
   w_succs::w->Task->[Task]
+  w_succs w t = filter (\x->w_hasEdge w t x) [0..w_nTask w-1]
 
-  w_inp::w->Task->Task->Bool
-  w_inp w t0 t1 = t0 `elem` w_preds w t1
-
-  w_ins::w->Task->Task->Bool
-  w_ins w t0 t1 = t0 `elem` w_succs w t1
+  w_hasEdge::w->Task->Task->Bool
+  w_hasEdge w ti tj = ti `elem` w_preds w tj
 
   w_comm::w->Task->Task->Data
   w_refTime::w->Task->Time
@@ -82,10 +82,10 @@ succs::Problem->Task->[Task]
 succs (Prob w _) = w_succs w
 
 inp::Problem->Task->Task->Bool
-inp (Prob w _) = w_inp w
+inp (Prob w _) ti tj = w_hasEdge w ti tj
 
 ins::Problem->Task->Task->Bool
-ins (Prob w _) = w_ins w
+ins (Prob w _) tj ti = w_hasEdge w ti tj
 
 comm::Problem->Task->Task->Data
 comm (Prob w _) = w_comm w

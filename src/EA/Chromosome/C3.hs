@@ -52,8 +52,8 @@ instance Chromosome C3 where
   mutate p _ (C3 o hs) = do
     mf <- choose mutateByMerging $ mutateBySplitting o
     hs' <- mf hs >>= mutateInTypes p
-    o' <- mutateOrder p o
-    return $ C3 o' hs'
+    -- o' <- mutateOrder p o
+    return $ C3 o hs'
 
   encode p (Schedule o t2i i2t) =
     let _insert t is = let i = t2i ! t in is // [(i, insertTask t $ is!i)]

@@ -4,12 +4,13 @@ import           Problem
 
 import           Data.Function
 import           Data.List
-import qualified Data.Map.Strict   as Map
-import qualified Data.Set          as Set
-import           Data.Vector       ((!))
-import qualified Data.Vector       as Vec
-import           Text.HandsomeSoup (css)
+import qualified Data.Map.Strict      as Map
+import qualified Data.Set             as Set
+import           Data.Vector          ((!))
+import qualified Data.Vector          as Vec
+import           Text.HandsomeSoup    (css)
 import           Text.XML.HXT.Core
+import           Text.XML.HXT.TagSoup
 
 -- Definition --
 
@@ -24,8 +25,7 @@ instance Workflow Pegasus where
   w_preds w = Set.toList . (_preds w !)
   w_succs w = Set.toList . (_succs w !)
 
-  w_inp w t = Set.member t . (_preds w !)
-  w_ins w t = Set.member t . (_succs w !)
+  w_hasEdge w ti tj = Set.member ti $ _preds w ! tj
 
   w_nTask = _num
 
@@ -36,9 +36,9 @@ instance Workflow Pegasus where
 -- Creation --
 
 type TaskID = String
-type RawDAG = ([(TaskID, String)],
-               [(TaskID, (String, (String, String)))],
-               [(TaskID,TaskID)])
+type RawRuntime = [(TaskID, String)]
+type RawUses = [(TaskID, (String, (String, String)))]
+type RawControl = [(TaskID,TaskID)]
 
 readRuntime = css "job" >>>
               (getAttrValue "id" &&& getAttrValue "runtime")
@@ -104,17 +104,16 @@ replaceDeps = map (\x -> case x of
 addPN::[(TaskID, Time)] -> [(TaskID, Time)]
 addPN = ([("entry", 0), ("exit", 0)] ++)
 
-readXML::String->IO RawDAG
+readXML::String->IO ([((TaskID, TaskID), Data)],[(TaskID, Time)])
 readXML path = do
-  xml <- readFile path
-  let doc = readString [] xml
+  let doc = readDocument [withTagSoup, withValidate no] path
   runtime <- runX $ doc >>> readRuntime
   uses <- runX $ doc >>> readUses
   control <- runX $ doc >>> readControl
-  return $ (runtime, uses, control)
+  return $ parse runtime uses control
 
-parse::RawDAG->([((TaskID, TaskID), Data)],[(TaskID, Time)])
-parse (runtime, uses, control) =
+parse::RawRuntime->RawUses->RawControl->([((TaskID, TaskID), Data)],[(TaskID, Time)])
+parse runtime uses control =
   (replaceDeps $ mergeDeps control $ addPDeps datas rawRuntime,
    addPN rawRuntime)
   where rawRuntime = getRuntime runtime
@@ -169,9 +168,8 @@ indexDeps index deps = Map.fromList $ map f2 deps
 
 mkWorkflow::String->IO Pegasus
 mkWorkflow fpath =
-  do rawDAG <- readXML fpath
-     let (deps, rawruntimes) = parse rawDAG
-         rawpreds = mkPreds ["entry"] $ map fst deps
+  do (deps, rawruntimes) <- readXML fpath
+     let rawpreds = mkPreds ["entry"] $ map fst deps
          rawsuccs = mkSuccs ["exit"] $ map fst deps
          index = topSort rawpreds
      return $

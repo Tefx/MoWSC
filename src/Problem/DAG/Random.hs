@@ -29,8 +29,7 @@ instance Workflow RWF where
   w_preds w = ISet.toList . (j_preds w !)
   w_succs w = ISet.toList . (j_succs w !)
 
-  w_inp w t = ISet.member t . (j_preds w !)
-  w_ins w t = ISet.member t . (j_succs w !)
+  w_hasEdge w ti tj = ISet.member ti $ j_preds w ! tj
 
   w_nTask = j_num
 

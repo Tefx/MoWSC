@@ -71,8 +71,7 @@ import           MOP                           (MakespanCost, ObjValue,
                                                 Objectives, getObjs, toList)
 import           Problem                       (Problem (Prob), calObjs, nTask,
                                                 nType)
-import           Problem.DAG.Pegasus           as Pegasus
-import           Problem.DAG.Random            as RandDAG
+import           Problem.DAG.TinyDAG           as DAG
 import           Problem.Service.EC2           as EC2
 import           Utils                         (With, attached, original)
 
@@ -113,7 +112,7 @@ ea = Exp { alg = "heft" &= argPos 0 &= typ "ALG"
 
 process::Exp->IO ()
 process args = do
-  w <- Pegasus.mkWorkflow . head $ file args
+  w <- DAG.fromFile . head $ file args
   s <- EC2.mkService $ limit args
   g <- newPureMT
   let p = Prob w s
@@ -185,7 +184,7 @@ spea2 i p c = evalEA p c $ EAToolbox { popInit = i
 abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 abc i p c = evalEA p c' $ EAToolbox { popInit = i
                                     , mutSel = rouletteSelGen assignSPEA2Fit
-                                    , envSel = spea2Select
+                                    , envSel = EF.spea2Select
                                     , breeder = abcBreeder}
   where c' = c{numGen=numGen c `quot` 2}
 

@@ -21,15 +21,16 @@ exp_defaults = {
 
 experiments = {
     # "SPEA2-C0":{"cmd":"spea2_c0",},
-    "SPEA2-C3":{"cmd":"spea2_c3",},
-    "NSGA2-C3":{"cmd":"nsga2_c3"},
+    # "SPEA2-C3":{"cmd":"spea2_c3",},
+    # "NSGA2-C3":{"cmd":"nsga2_c3"},
     # "MOHEFT":{"times":1,"cmd":"moheft"},
-    # "HBCS":{"times":1,"cmd":"hbcs"},
+    "HBCS":{"times":1,"cmd":"hbcs"},
 }
 
 ## DAG
 
-dag_pegasus_path = "./resources/workflows/Pegasus/%s.xml"
+dax_pegasus_path = "./resources/workflows/Pegasus/%s.xml"
+dag_pegasus_path = "./resources/workflows/tiny/%s.json"
 
 dag_pegasus = [
     "Montage_25",
@@ -39,7 +40,7 @@ dag_pegasus = [
     "Epigenomics_24",
     "Epigenomics_46",
     "Epigenomics_100",
-    "Epigenomics_997_fixed",
+    "Epigenomics_997",
     "CyberShake_30",
     "CyberShake_50",
     "CyberShake_100",
@@ -65,7 +66,7 @@ query_cond = {
         "SPEA2-C0",
         "SPEA2-C3",
         "NSGA2-C3",
-        # "HBCS",
+        "HBCS",
         # "MOHEFT",
     ],
     "pop_size" : [50],
