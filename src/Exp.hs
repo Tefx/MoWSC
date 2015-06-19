@@ -82,6 +82,7 @@ import qualified Data.Vector                   as Vec
 import           GHC.Generics                  (Generic)
 import           Problem.Foreign               (computeObjs, finishProblem,
                                                 setupProblem)
+import           Random.Xorshift               (newXorshift)
 import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 def, help, name, summary, typ,
                                                 typFile, (&=))
@@ -115,6 +116,7 @@ process args = do
   w <- DAG.fromFile . head $ file args
   s <- EC2.mkService $ limit args
   g <- newPureMT
+  -- g <- newXorshift
   let p = Prob w s
       ec = EASetup { numGen = gen $ args
                    , sizePop = popsize $ args

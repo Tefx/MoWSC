@@ -4,7 +4,7 @@ cabal-version: >=1.6
 build-type: Simple
 
 executable MoWSC-exp
-    build-depends: aeson -any, base -any, bytestring -any, containers -any, vector -any, deepseq -any, hxt -any, HandsomeSoup -any, lcs -any, unordered-containers -any, cmdargs -any, mersenne-random-pure64 -any, MonadRandom -any, ghc-prim -any, hxt-tagsoup -any
+    build-depends: aeson -any, base -any, bytestring -any, containers -any, vector -any, deepseq -any, hxt -any, HandsomeSoup -any, lcs -any, unordered-containers -any, cmdargs -any, mersenne-random-pure64 -any, MonadRandom -any, ghc-prim -any, hxt-tagsoup -any, xorshift -any
     main-is: Exp.hs
     ghc-options: -O2
     buildable: True

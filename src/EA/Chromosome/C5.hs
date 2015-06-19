@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 
-module EA.Chromosome.C3 (C3) where
+module EA.Chromosome.C5 (C5) where
 
 import           EA                    (Chromosome (..))
 import           EA.Chromosome.Generic (mutateOrder)
@@ -26,8 +26,8 @@ data Host = Host { _type  :: InsType
 instance NFData Host where
   rnf (Host _p _t) = rnf _p `seq` rnf _t `seq` ()
 
-mergeHosts::(Host, Host)->InsType->Host
-mergeHosts (Host _ ts0, Host _ ts1) t = Host t $ IntSet.union ts0 ts1
+mergeHosts::Host->Host->InsType->Host
+mergeHosts (Host _ ts0) (Host _ ts1) t = Host t $ IntSet.union ts0 ts1
 
 splitHost::[Task]->Host->(Int, Int)->[Host]
 splitHost o (Host t ts) (p0, p1) =
@@ -39,8 +39,8 @@ splitHost o (Host t ts) (p0, p1) =
 insertTask::Task->Host->Host
 insertTask t (Host _t _s) = Host _t $ IntSet.insert t _s
 
-_mergeMutate::(RandomGen g)=>(Host, Host)->Rand g Host
-_mergeMutate is@(Host t0 _, Host t1 _) = mergeHosts is <$> choose t0 t1
+_mergeMutate::(RandomGen g)=>Host->Host->Rand g Host
+_mergeMutate h0@(Host t0 _) h1@(Host t1 _) = mergeHosts h0 h1 <$> choose t0 t1
 
 _splitMutate::(RandomGen g)=>Orders->Host->Rand g [Host]
 _splitMutate o h = do [p0, p1] <- (randPos 2 . (+1) . IntSet.size $ _tasks h)
@@ -81,13 +81,32 @@ mutateByMerging hs = do [p0, p1] <- randPos 2 $ Vec.length hs
                                     hs // [(p0, h')]
 
 mutateBySplitting::(RandomGen g)=>Orders->Vec.Vector Host->Rand g (Vec.Vector Host)
-mutateBySplitting o hs = do
-  let prob = 1.0 / (fromIntegral $ Vec.length hs)
+mutateBySplitting o hs = do --p <- getRandomR (0, Vec.length hs - 1)
+  -- [p] <- rouletteSelect 1 $ Vec.map (fromIntegral . IntSet.size . _tasks) hs
+  --p <- selNonSingle hs
+  --(h0, h1) <- _splitMutate o $ hs ! p
+  --if (IntSet.null $ _tasks h0) ||
+  --   (IntSet.null $ _tasks h1)
+  --  then return hs
+  --  else return . Vec.cons h1 $ hs // [(p, h0)]
+  let base = 1.0 / (fromIntegral $ Vec.length hs)
+  prob <- getRandomR (0, 1)
   hss <- flip Vec.mapM hs $ join . doWithProb prob (_splitMutate o) (return . (:[]))
   return . Vec.filter (not . IntSet.null . _tasks) .
     Vec.fromList . concat $ Vec.toList hss
 
 mutateInTypes::(RandomGen g)=>Problem->Vec.Vector Host->Rand g (Vec.Vector Host)
 mutateInTypes p hs =
+  -- do l <- getRandomR (0, Vec.length hs - 1)
+  --   h' <- _typeMutate p $ hs!l
+  --   return $ hs // [(l, h')]
+  -- let prob = 1.0 / (fromIntegral $ Vec.length hs)
+  --                   in flip Vec.mapM hs $ probApply prob (_typeMutate p)
   let prob = 1.0 / (fromIntegral $ Vec.length hs) :: Double
-  in flip Vec.mapM hs $ join . doWithProb prob (_typeMutate p) return
+  in flip Vec.mapM hs $ \h-> do r <- getRandomR (0, 1)
+                                if r < prob then _typeMutate p h else return h
+
+mutSelect::(RandomGen g)=>Double->[a]->Rand g ([a], [a])
+mutSelect p (x:xs) = do r <- getRandomR (0, 1)
+                        xr, yr <- mutSelect p xs
+                        return $ if r <= p then (x:xr, yr) else (xr, x:yr)
