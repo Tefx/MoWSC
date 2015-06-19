@@ -6,8 +6,10 @@ import           EA                    (Chromosome (..))
 import           EA.Chromosome.Generic (mutateOrder)
 import           Problem               (Ins, InsType, Orders, Problem,
                                         Schedule (Schedule), Task, nTask, nType)
-import           Utils.Random          (choose, choose, doWithProb, randPos)
+import           Utils.Random          (choose, doWithProb, probApply, randPos,
+                                        rouletteSelect)
 
+import           Control.DeepSeq       (NFData (..), force)
 import           Control.Monad         (join)
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
 import           Data.Function         (on)
@@ -16,18 +18,23 @@ import qualified Data.IntSet           as IntSet
 import           Data.Vector           ((!), (//))
 import qualified Data.Vector           as Vec
 
+import           Debug.Trace           (traceShow)
+
 data Host = Host { _type  :: InsType
                  , _tasks :: IntSet.IntSet}
 
-mergeHosts::(Host, Host)->InsType->Host
-mergeHosts (Host t0 ts0, Host t1 ts1) t = Host t $ IntSet.union ts0 ts1
+instance NFData Host where
+  rnf (Host _p _t) = rnf _p `seq` rnf _t `seq` ()
 
-splitHost::[Task]->Host->(Int, Int)->(Host, Host)
+mergeHosts::(Host, Host)->InsType->Host
+mergeHosts (Host _ ts0, Host _ ts1) t = Host t $ IntSet.union ts0 ts1
+
+splitHost::[Task]->Host->(Int, Int)->[Host]
 splitHost o (Host t ts) (p0, p1) =
   let ts0 = IntSet.fromList . drop p0 . take p1 $
             filter (flip IntSet.member ts) o
       ts1 = IntSet.filter (not . flip IntSet.member ts0) ts
-  in (Host t ts0, Host t ts1)
+  in [Host t ts0, Host t ts1]
 
 insertTask::Task->Host->Host
 insertTask t (Host _t _s) = Host _t $ IntSet.insert t _s
@@ -35,7 +42,7 @@ insertTask t (Host _t _s) = Host _t $ IntSet.insert t _s
 _mergeMutate::(RandomGen g)=>(Host, Host)->Rand g Host
 _mergeMutate is@(Host t0 _, Host t1 _) = mergeHosts is <$> choose t0 t1
 
-_splitMutate::(RandomGen g)=>Orders->Host->Rand g (Host, Host)
+_splitMutate::(RandomGen g)=>Orders->Host->Rand g [Host]
 _splitMutate o h = do [p0, p1] <- (randPos 2 . (+1) . IntSet.size $ _tasks h)
                       return $ splitHost o h (p0, p1)
 
@@ -46,13 +53,17 @@ _typeMutate p (Host t ts) = flip Host ts <$> getRandomR (0, nType p-1)
 data C3 = C3 { _order :: Orders
              , _inss  :: Vec.Vector Host}
 
+instance NFData C3 where
+  rnf (C3 _o _i) = rnf _o `seq` rnf _i `seq` ()
+
 instance Chromosome C3 where
   repMode _ = (1, 1)
 
   mutate p _ (C3 o hs) = do
     mf <- choose mutateByMerging $ mutateBySplitting o
     hs' <- mf hs >>= mutateInTypes p
-    -- o' <- mutateOrder p o
+    o' <- mutateOrder p o
+    let n = Vec.map (IntSet.size . _tasks) hs
     return $ C3 o hs'
 
   encode p (Schedule o t2i i2t) =
@@ -60,12 +71,12 @@ instance Chromosome C3 where
     in C3 o . Vec.filter (not . IntSet.null . _tasks) $
        foldr _insert (Vec.map (flip Host IntSet.empty) i2t) [0..nTask p-1]
 
-  decode p (C3 o hs) =
-    let _assignIns i ts = map (,i) . IntSet.toList $ _tasks ts
-        i2t = Vec.map _type hs
-        t2i = Vec.foldr (flip (//)) (Vec.replicate (nTask p) 0) $
-              Vec.imap _assignIns hs
-    in Schedule o t2i i2t
+  decode p (C3 o hs) = Schedule o (calt2i p hs) (Vec.map _type hs)
+
+calt2i::Problem->Vec.Vector Host->Vec.Vector Int
+calt2i p hs = let f i s = map (,i) . IntSet.toList $ _tasks s
+              in (Vec.//) (Vec.replicate (nTask p) 0) .
+                 concat . Vec.toList $ Vec.imap f hs
 
 mutateByMerging::(RandomGen g)=>Vec.Vector Host->Rand g (Vec.Vector Host)
 mutateByMerging hs = do [p0, p1] <- randPos 2 $ Vec.length hs
@@ -75,14 +86,34 @@ mutateByMerging hs = do [p0, p1] <- randPos 2 $ Vec.length hs
                                     hs // [(p0, h')]
 
 mutateBySplitting::(RandomGen g)=>Orders->Vec.Vector Host->Rand g (Vec.Vector Host)
-mutateBySplitting o hs = do p <- getRandomR (0, Vec.length hs - 1)
-                            (h0, h1) <- _splitMutate o $ hs ! p
-                            if (IntSet.null $ _tasks h0) ||
-                               (IntSet.null $ _tasks h1)
-                              then return hs
-                              else return . Vec.cons h1 $ hs // [(p, h0)]
+mutateBySplitting o hs = do --p <- getRandomR (0, Vec.length hs - 1)
+  -- [p] <- rouletteSelect 1 $ Vec.map (fromIntegral . IntSet.size . _tasks) hs
+  --p <- selNonSingle hs
+  --(h0, h1) <- _splitMutate o $ hs ! p
+  --if (IntSet.null $ _tasks h0) ||
+  --   (IntSet.null $ _tasks h1)
+  --  then return hs
+  --  else return . Vec.cons h1 $ hs // [(p, h0)]
+  let base = 1.0 / (fromIntegral $ Vec.length hs)
+  prob <- getRandomR (base, base * 3)
+  hss <- flip Vec.mapM hs $ join . doWithProb prob (_splitMutate o) (return . (:[]))
+  return . Vec.filter (not . IntSet.null . _tasks) .
+    Vec.fromList . concat $ Vec.toList hss
 
 mutateInTypes::(RandomGen g)=>Problem->Vec.Vector Host->Rand g (Vec.Vector Host)
 mutateInTypes p hs =
-  flip Vec.mapM hs $
-  join . doWithProb (1.0 / (fromIntegral $ Vec.length hs)) (_typeMutate p) return
+  -- do l <- getRandomR (0, Vec.length hs - 1)
+  --   h' <- _typeMutate p $ hs!l
+  --   return $ hs // [(l, h')]
+  -- let prob = 1.0 / (fromIntegral $ Vec.length hs)
+  --                   in flip Vec.mapM hs $ probApply prob (_typeMutate p)
+  let prob = 1.0 / (fromIntegral $ Vec.length hs) :: Double
+  in flip Vec.mapM hs $ \h-> do r <- getRandomR (0, 1)
+                                if r < prob then _typeMutate p h else return h
+
+selNonSingle::(RandomGen g)=>Vec.Vector Host->Rand g Int
+selNonSingle hs = do let ns = Vec.map fst .
+                              Vec.filter ((/=1) . IntSet.size . _tasks . snd) $
+                              Vec.imap (,) hs
+                     p <- getRandomR (0, Vec.length ns - 1)
+                     return $ ns ! p

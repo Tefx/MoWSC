@@ -8,6 +8,7 @@ import           Problem
 import           Utils.Random          (chooseWithP, doWithProb, randPos,
                                         randSplit)
 
+import           Control.DeepSeq       (NFData (..))
 import           Control.Monad         (join)
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
 import           Data.Functor          ((<$>))
@@ -21,6 +22,9 @@ import qualified Data.Vector           as Vec
 
 data C2 = C2 { _order :: Orders
              , _inss  :: Vector InsHost}
+
+instance NFData C2 where
+  rnf (C2 _o _i) = rnf _o `seq` rnf _i
 
 instance Chromosome C2 where
   repMode _ = (1, 1)
@@ -47,6 +51,9 @@ instance Chromosome C2 where
 
 data InsHost = IHost { _type  :: InsType
                      , _tasks :: Set Task}
+
+instance NFData InsHost where
+  rnf (IHost _p _t) = rnf _p `seq` rnf _t
 
 mergeHosts::Vector InsHost->InsHost
 mergeHosts is = let t = _type $ Vec.maximumBy (comparing $ Set.size . _tasks) is

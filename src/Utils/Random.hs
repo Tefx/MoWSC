@@ -1,13 +1,12 @@
 {-# LANGUAGE TupleSections #-}
 
-module Utils.Random  ( doWithProb
+module Utils.Random  ( doWithProb, probApply
                      , randPos, uniRandPos
                      , chooseWithP, chooseWithP2, choose
                      , randSplit, rouletteSelect) where
 
+import           Control.Monad        (join, replicateM)
 import           Control.Monad.Random
-
-import           Control.Monad        (replicateM)
 import           Data.Functor         ((<$>))
 import           Data.List            (sort)
 import           Data.Vector          ((!))
@@ -17,6 +16,11 @@ doWithProb::(RandomGen g)=>Double->(a->b)->(a->b)->a->Rand g b
 doWithProb p f g x = do
   r <- getRandomR (0, 1)
   return $ if r <= p then f x else g x
+
+probApply::(RandomGen g)=>Double->(a->Rand g a)->a->Rand g a
+probApply p f x = do
+  r <- getRandomR (0, 1)
+  if r <= p then f x else return x
 
 uniRandPos::(RandomGen g)=>Int->Int->Rand g [Int]
 uniRandPos n m = posl [] n

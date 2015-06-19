@@ -4,10 +4,11 @@ module Utils ( foldM'
              , unique
              , With (..), attach) where
 
-import           Data.List   (maximumBy, (\\))
-import           Data.Ord    (comparing)
-import qualified Data.Set    as Set
-import qualified Data.Vector as Vec
+import           Control.DeepSeq (NFData (..))
+import           Data.List       (maximumBy, (\\))
+import           Data.Ord        (comparing)
+import qualified Data.Set        as Set
+import qualified Data.Vector     as Vec
 
 foldM'::Monad m=>(a -> b -> m a) -> a -> [b] -> m a
 foldM' _ z [] = return z
@@ -30,6 +31,9 @@ unique pop = (Vec.fromList pop0, Vec.fromList pop1)
 
 data With a b = With { attached :: a
                      , original :: b}
+
+instance (NFData a, NFData b)=>NFData (With a b) where
+  rnf (With a b) = rnf a `seq` rnf b `seq` ()
 
 attach::a->b->With a b
 attach = With

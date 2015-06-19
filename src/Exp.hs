@@ -55,7 +55,7 @@ import           EA                            (Chromosome, EASetup (..),
                                                 NullInfo (..), PopInitialiser,
                                                 Population, abcBreeder, evalEA,
                                                 normalBreeder, normalBreederF)
-import           EA.Chromosome                 (C0, C1, C2, C3, C3i, C4)
+import           EA.Chromosome                 (C0, C1, C2, C3, C4)
 import qualified EA.Foreign                    as EF
 import           EA.Init
 import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
@@ -133,10 +133,6 @@ process args = do
     "nsga2_c3" -> dumpRes . runEA g $ eaNSGA2_C3 p ec
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
-    "spea2_c3sr" -> dumpRes . runEA g $ eaSPEA2_C3sr p ec
-    "spea2_c3h2" -> dumpRes . runEA g $ eaSPEA2_C3h2 p ec
-    "spea2_c3mls" -> dumpRes . runEA g $ eaSPEA2_C3mls p ec
-    "spea2_c3srm" -> dumpRes . runEA g $ eaSPEA2_C3srm p ec
     "moabc" -> dumpRes . runEA g $ eaMOABC p ec
   finishProblem
 
@@ -178,7 +174,7 @@ nsga2 i p c = evalEA p c $ EAToolbox { popInit = i
 spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , mutSel = nullSelGen
-                                     , envSel = EF.spea2Select
+                                     , envSel = spea2Select
                                      , breeder = normalBreederF}
 
 abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c

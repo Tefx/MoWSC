@@ -8,6 +8,7 @@ import           Problem               (InsType, Orders, Problem, Schedule (..),
                                         Task, nTask, nType)
 import           Utils.Random          (choose, doWithProb, randPos)
 
+import           Control.DeepSeq       (NFData (..))
 import           Control.Monad         (join)
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
 import           Data.Functor          ((<$>))
@@ -17,6 +18,9 @@ import qualified Data.Vector           as Vec
 
 data Host = Host { _type  :: InsType
                  , _tasks :: [Task]}
+
+instance NFData Host where
+  rnf (Host _p _t) = rnf _p `seq` rnf _t
 
 absorb::(RandomGen g)=>Problem->Host->Host->Rand g Host
 absorb _ (Host t0 tl0) (Host t1 tl1) = flip Host (tl0 ++ tl1) <$> choose t0 t1
@@ -39,6 +43,9 @@ filterUsed = Vec.filter (not . null . _tasks)
 
 data C4 = C4 { _order :: Orders
              , _hosts :: Vec.Vector Host}
+
+instance NFData C4 where
+  rnf (C4 _o _h) = rnf _o `seq` rnf _h
 
 instance Chromosome C4 where
   repMode _ = (1, 1)

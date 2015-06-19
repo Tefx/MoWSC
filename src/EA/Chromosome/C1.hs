@@ -4,6 +4,7 @@ import           EA                    (Chromosome (..))
 import           EA.Chromosome.Generic (crossoverOrder, mutateOrder)
 import           Problem
 
+import           Control.DeepSeq       (NFData (..))
 import           Control.Monad.Random  (Rand, RandomGen, getRandomR)
 import           Data.Functor          ((<$>))
 import qualified Data.Map              as Map
@@ -14,6 +15,9 @@ import qualified Data.Vector           as Vec
 data C1 = C1 { _order    :: [Task]
              , _task2ins :: Vec.Vector Ins
              , _ins2type :: Vec.Vector InsType}
+
+instance NFData C1 where
+  rnf (C1 _o _t _i) = rnf _o `seq` rnf _t `seq` rnf _i
 
 instance Chromosome C1 where
   repMode _ = (2, 2)
