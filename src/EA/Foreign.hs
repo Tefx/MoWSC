@@ -5,7 +5,7 @@ module EA.Foreign (spea2Select) where
 
 import qualified Data.Vector           as Vec
 import qualified Data.Vector.Storable  as VS
-import           Foreign
+import           Foreign               hiding (unsafePerformIO)
 import           Foreign.C.Types
 import           Foreign.Marshal.Alloc (free)
 import           Foreign.Marshal.Array (newArray)

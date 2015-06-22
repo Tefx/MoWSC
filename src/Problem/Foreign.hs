@@ -4,7 +4,7 @@ module Problem.Foreign (setupProblem, finishProblem, computeObjs) where
 
 import           Control.Monad         (forM_)
 import qualified Data.Vector           as Vec
-import           Foreign
+import           Foreign               hiding (unsafePerformIO)
 import           Foreign.C.Types
 import           Foreign.Marshal.Alloc (free)
 import           Foreign.Marshal.Array (newArray)

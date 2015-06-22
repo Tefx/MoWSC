@@ -115,8 +115,8 @@ process::Exp->IO ()
 process args = do
   w <- DAG.fromFile . head $ file args
   s <- EC2.mkService $ limit args
-  g <- newPureMT
-  -- g <- newXorshift
+  -- g <- newPureMT
+  g <- newXorshift
   let p = Prob w s
       ec = EASetup { numGen = gen $ args
                    , sizePop = popsize $ args
