@@ -3,12 +3,12 @@
 module EA.Chromosome.C3 (C3) where
 
 import           EA                    (Chromosome (..))
+import           EA.Chromosome.Foreign (probSelect)
 import           EA.Chromosome.Generic (mutateOrder)
 import           Problem               (Ins, InsType, Orders, Problem,
                                         Schedule (Schedule), Task, nTask, nType)
 import           Utils.Random          (choose, doWithProb, probApply, randPos,
                                         rouletteSelect)
-import  EA.Chromosome.Foreign (probSelect)
 
 import           Control.DeepSeq       (NFData (..), force)
 import           Control.Monad         (join)
@@ -88,21 +88,26 @@ mutateByMerging hs = do [p0, p1] <- randPos 2 $ Vec.length hs
 
 mutateBySplitting::(RandomGen g)=>Orders->Vec.Vector Host->Rand g (Vec.Vector Host)
 mutateBySplitting o hs = do
-  let prob = 1.0 / (fromIntegral $ Vec.length hs)
-  --hss <- flip Vec.mapM hs $ join . doWithProb prob (_splitMutate o) (return . (:[]))
-  --return . Vec.filter (not . IntSet.null . _tasks) .
-  --  Vec.fromList . concat $ Vec.toList hss
-      (hs1, hs2) = probSelect prob hs -- randomPartition prob hs
-  hss <- Vec.mapM (_splitMutate o) hs1
-  return . (Vec.++) hs2 . Vec.fromList . concat $ Vec.toList hss
+  p <- getRandomR (0, Vec.length hs - 1)
+  [h0, h1] <- _splitMutate o $ hs ! p
+  if (IntSet.null $ _tasks h0) ||
+     (IntSet.null $ _tasks h1)
+    then return hs
+    else return . Vec.cons h1 $ hs // [(p, h0)]
+  -- let prob = 1 / (fromIntegral $ Vec.length hs)
+  -- --hss <- flip Vec.mapM hs $ join . doWithProb prob (_splitMutate o) (return . (:[]))
+  -- --return . Vec.filter (not . IntSet.null . _tasks) .
+  -- --  Vec.fromList . concat $ Vec.toList hss
+  --     (hs1, hs2) = probSelect prob hs -- randomPartition prob hs
+  -- hss <- Vec.mapM (_splitMutate o) hs1
+  -- return . (Vec.++) hs2 . Vec.fromList . concat $ Vec.toList hss
 
 mutateInTypes::(RandomGen g)=>Problem->Vec.Vector Host->Rand g (Vec.Vector Host)
 mutateInTypes p hs = do
-  let prob = 1.0 / (fromIntegral $ Vec.length hs) :: Double
-      (hs1, hs2) = probSelect prob hs -- randomPartition prob hs
+  let prob = 1 / (fromIntegral $ Vec.length hs) :: Double
+      (hs1, hs2) = probSelect prob hs
   hs1' <- Vec.mapM (_typeMutate p) hs1
   return $ hs1' Vec.++ hs2
-  -- in flip Vec.mapM hs $ join . doWithProb prob (_typeMutate p) return
 
 randomPartition::(RandomGen g)=>Double->Vec.Vector a->Rand g (Vec.Vector a, Vec.Vector a)
 randomPartition p vs = do cs <- Vec.replicateM (Vec.length vs) ((<p) <$> getRandom)

@@ -55,7 +55,7 @@ import           EA                            (Chromosome, EASetup (..),
                                                 NullInfo (..), PopInitialiser,
                                                 Population, abcBreeder, evalEA,
                                                 normalBreeder, normalBreederF)
-import           EA.Chromosome                 (C0, C1, C2, C3, C4)
+import           EA.Chromosome
 import qualified EA.Foreign                    as EF
 import           EA.Init
 import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
@@ -100,7 +100,7 @@ ea::Exp
 ea = Exp { alg = "heft" &= argPos 0 &= typ "ALG"
          , limit = 10000 &=name "l" &= typ "MAX_INSTANCES"
                    &= help "Max instance limit."
-         , popsize = 50 &= name "p" &= typ "NUM"
+         , popsize = 20 &= name "p" &= typ "NUM"
                      &= help "Size of Population."
          , gen = 1000 &= name "g" &= typ "NUM"
                  &= help "Number of Generation."
@@ -135,6 +135,7 @@ process args = do
     "nsga2_c3" -> dumpRes . runEA g $ eaNSGA2_C3 p ec
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
+    "spea2_c5" -> dumpRes . runEA g $ eaSPEA2_C5 p ec
     "moabc" -> dumpRes . runEA g $ eaMOABC p ec
   finishProblem
 
@@ -176,7 +177,7 @@ nsga2 i p c = evalEA p c $ EAToolbox { popInit = i
 spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , mutSel = nullSelGen
-                                     , envSel = spea2Select
+                                     , envSel = EF.spea2Select
                                      , breeder = normalBreederF}
 
 abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
@@ -195,20 +196,8 @@ eaSPEA2_C0 = spea2 randPoolOrHeft
 eaSPEA2_C3::ExpType MakespanCost C3
 eaSPEA2_C3 = spea2 randTypeSRH
 
-eaSPEA2_C3r::ExpType MakespanCost C3
-eaSPEA2_C3r = spea2 randPoolOrHeft
-
-eaSPEA2_C3sr::ExpType MakespanCost C3
-eaSPEA2_C3sr = spea2 randTypeSR
-
-eaSPEA2_C3h2::ExpType MakespanCost C3
-eaSPEA2_C3h2 = spea2 randHEFT
-
-eaSPEA2_C3mls::ExpType MakespanCost C3
-eaSPEA2_C3mls = spea2 randMLS
-
-eaSPEA2_C3srm::ExpType MakespanCost C3
-eaSPEA2_C3srm = spea2 randTypeSROrMLS
+eaSPEA2_C5::ExpType MakespanCost C5
+eaSPEA2_C5 = spea2 randTypeSRH
 
 eaMOABC::ExpType MakespanCost C0
 eaMOABC = abc randPoolOrHeft

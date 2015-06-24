@@ -5,4 +5,6 @@
 
 void prob_select(double p, size_t n, int* decisions);
 
+void ol_trans(int n, int* ys, int* xs);
+
 #endif

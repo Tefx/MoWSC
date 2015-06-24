@@ -60,17 +60,16 @@ calDs nz is = Vec.map (\i->sort . Vec.toList $ Vec.map ((eucInd nz) i) is) is
 
 -- select --
 
-compareByKD::(a, [Double])->(a, [Double])->Ordering
-compareByKD (_, []) (_, []) = EQ
-compareByKD (a, x:xs) (b, y:ys)
-  | x == y = compareByKD (a, xs) (b, ys)
+compareByKD::[Double]->[Double]->Ordering
+compareByKD [] [] = EQ
+compareByKD (x:xs) (y:ys)
+  | x == y = compareByKD xs ys
   | otherwise = compare x y
 
 trunc::(WithObjs o)=>Normaliser->Int->Vec.Vector o->Vec.Vector o
 trunc nz n pop
   | n == Vec.length pop = pop
-  | otherwise = let pd = Vec.zipWith (,) pop $ calDs nz pop
-                    r = Vec.minIndexBy compareByKD pd
+  | otherwise = let r = Vec.minIndexBy compareByKD $ calDs nz pop
                 in trunc nz n $ Vec.ifilter (\i _->i /= r) pop
 
 --trunc'::(WithObjs o)=>Normaliser->Int->Vec.Vector [Double]->Vec.Vectir o->Vec.Vector o
