@@ -63,14 +63,16 @@ import           EA.Selection                  (nullSelGen, rouletteSelGen,
                                                 tournamentSelGen)
 import           EA.SPEA2                      (assignSPEA2Fit, spea2Select)
 import           Heuristic.Cheap               (cheap)
+import           Heuristic.EBCS                (ebcs)
 import           Heuristic.HBCS                (hbcs)
 import           Heuristic.HEFT                (heft)
+import           Heuristic.LBCS                (lbcs)
 import           Heuristic.MLS                 (mls)
 import           Heuristic.MOHEFT              (moheft)
 import           MOP                           (MakespanCost, ObjValue,
                                                 Objectives, getObjs, toList)
-import           Problem                       (Problem (Prob), calObjs, nTask,
-                                                nType)
+import           Problem                       (Problem (Prob), Schedule,
+                                                calObjs, nTask, nType)
 import           Problem.DAG.TinyDAG           as DAG
 import           Problem.Service.EC2           as EC2
 import           Utils                         (With, attached, original)
@@ -122,13 +124,14 @@ process args = do
                    , sizePop = popsize $ args
                    , probCrs = pcr $ args
                    , probMut = pmu $ args}
-      kstep = (1.0/) . fromIntegral $ popsize args - 1
   setupProblem p
   BL.putStrLn $
     case alg $ args of
     "heft"     -> dumpRes . (NullInfo,) $ map computeObjs [heft p]
     "cheap"    -> dumpRes . (NullInfo,) $ map computeObjs [cheap p]
-    "hbcs"     -> dumpRes . (NullInfo,) . map (computeObjs . hbcs p) $ tail [0, kstep..1]
+    "hbcs"     -> runBudgetHeuristic p (popsize args) hbcs
+    "ebcs"     -> runBudgetHeuristic p (popsize args) ebcs
+    "lbcs"     -> runBudgetHeuristic p (popsize args) lbcs
     "moheft"   -> dumpRes . (NullInfo,) . map computeObjs . moheft p $ popsize args
     "mls"      -> dumpRes . (NullInfo,) . map computeObjs . mls p $ popsize args
 
@@ -142,13 +145,13 @@ process args = do
 
 main = process =<< cmdArgs ea
 
-data EAResWithInfo i o c = EARI { results :: [[ObjValue]]
-                                , extra   :: i} deriving (Show, Generic)
+data ResWithInfo i = RI { results :: [[ObjValue]]
+                        , extra   :: i} deriving (Show, Generic)
 
-instance (ToJSON i)=>ToJSON (EAResWithInfo i o c)
+instance (ToJSON i)=>ToJSON (ResWithInfo i)
 
 dumpRes::(ToJSON i)=>(i,[[ObjValue]])->BL.ByteString
-dumpRes (i,res) = encode $ EARI res i
+dumpRes (i,res) = encode $ RI res i
 
 deriving instance Generic NullInfo
 deriving instance Show NullInfo
@@ -201,3 +204,18 @@ eaSPEA2_C5 = spea2 randTypeSRH
 
 eaMOABC::ExpType MakespanCost C0
 eaMOABC = abc randPoolOrHeft
+
+calBudget::Problem->Double->Double
+calBudget p k = let c_max = (!!1) . computeObjs $ heft p
+                    c_min = (!!1) . computeObjs $ cheap p
+                in c_min + k * (c_max - c_min)
+
+data BudgetInfo = BI { budgets :: [Double]} deriving (Generic, Show)
+
+instance ToJSON BudgetInfo
+
+runBudgetHeuristic::Problem->Int->(Problem->Double->Schedule)->BL.ByteString
+runBudgetHeuristic p n alg =
+  let bs = [calBudget p (fromIntegral x/ fromIntegral n) | x<-[1..n]]
+      rs = map (computeObjs . alg p) bs
+  in encode . RI rs $ BI bs

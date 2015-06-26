@@ -2,7 +2,7 @@
 
 from utils import Normaliser
 from hv import HyperVolume
-from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, dag_pegasus
+from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, dag_pegasus, figure_path_pegasus_bar
 from query import query
 
 import matplotlib as mpl
@@ -10,6 +10,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from itertools import chain
+import numpy as np
 
 colors = "bgrcmykw"
 
@@ -32,6 +33,14 @@ def front_objs(dag, keys):
 	for k, v in d.iteritems():
 		d[k] = max(v, key=lambda x: hv.compute(map(nz, x)))
 	return d
+
+def budget_results(dag, keys):
+	d = fetch(dag, keys, "results")[0]
+	bs = fetch(dag, keys, "budgets")[0].values()[0][0]
+	res = {}
+	for alg, v in d.iteritems():
+		res[alg] = [[0,0] if r[1]>b else r for r,b in zip(v[0], bs)]
+	return res
 
 def best_hvs(dag, keys):
 	hv = HyperVolume(hv_ref)
@@ -59,18 +68,44 @@ def evolve_history(dag, key, hv_only=True):
 	return t
 
 def beDom(x, y):
-    if x[0] < y[0]:
-        return x[1] <= y[1]
-    elif x[0] == y[0]:
-        return x[1] < y[1]
-    else:
-        return False
+	if x[0] < y[0]:
+		return x[1] <= y[1]
+	elif x[0] == y[0]:
+		return x[1] < y[1]
+	else:
+		return False
 
 def nonDom(x, xs):
-    return not any([beDom(x, y) for y in xs])
+	return not any([beDom(x, y) for y in xs])
 
 def pareto_filter(xs):
-    return [x for x in xs if nonDom(x, xs)]
+	return [x for x in xs if nonDom(x, xs)]
+
+def plot_bar(d, save=None):
+	fig, ax = plt.subplots()
+	plt.xlabel('Budget Ratio')
+	plt.ylabel('Time(s)')
+
+	i = 0
+	j = 0
+	colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
+	bar_width = 0.7 / len(d)
+	
+	for alg, res in d.iteritems():
+		index = np.arange(len(res))
+		l1 = [x[0] for x in res]
+		plt.bar(index + j, l1, bar_width, color=colors[i], label=alg)
+		j += bar_width
+		i += 1
+
+	# plt.xticks(index + 0.35, bs)
+	plt.legend()
+
+	if save:
+		print "Writing %s ..." % (figure_path_pegasus_bar+save+".jpg")
+		plt.savefig(figure_path_pegasus_bar+save+".jpg", format="jpeg")
+	else:
+		plt.show()
 
 def plot_front(d, save=None, pareto=True):
 	fig, ax = plt.subplots()
@@ -156,6 +191,9 @@ if __name__ == '__main__':
 	elif argv[1] == "plot_d":
 		for dag in dag_pegasus:
 			plot_front(front_objs(dag, keys), dag, False)
+	elif argv[1] == "bar":
+		for dag in dag_pegasus:
+			plot_bar(budget_results(dag, keys), dag)
 	elif argv[1] == "show_trace":
 		dag = argv[2]
 		show_trace(evolve_history(dag, keys, False))

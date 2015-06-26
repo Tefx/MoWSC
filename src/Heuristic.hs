@@ -167,11 +167,6 @@ tidySchedule p pl order locs =
       _i2t = map (insType pl) inss
   in Schedule order (Vec.fromList _t2i) (Vec.fromList _i2t)
 
-_meanTimeComm::Problem->Task->Task->Time
-_meanTimeComm p t0 t1 = sum cs / (fromIntegral $ length cs)
-  where ts = [0,1..(nType p - 1)]
-        cs = [comm p t0 t1 / bw p p0 p1 |p0<-ts,p1<-ts]
-
 _meanTimeComp::Problem->Task->Time
 _meanTimeComp p t = sum ts / (fromIntegral $ length ts)
   where ts = [refTime p t / cu p i |i<-[0,1..(nType p - 1)]]

@@ -8,7 +8,7 @@ arg_tags = {
 }
 
 args_defaults = {
-    "pop_size" : 20,
+    "pop_size" : 25,
     "gen_num" : 1000,
     "prob_xo" : 1,
     "prob_mu" : 1,
@@ -21,11 +21,13 @@ exp_defaults = {
 
 experiments = {
     # "SPEA2-C0":{"cmd":"spea2_c0",},
-    "SPEA2-C3":{"cmd":"spea2_c3",},
-    "SPEA2-C5":{"cmd":"spea2_c5",},
+    # "SPEA2-C3":{"cmd":"spea2_c3",},
+    # "SPEA2-C5":{"cmd":"spea2_c5",},
     # "NSGA2-C3":{"cmd":"nsga2_c3"},
     # "MOHEFT":{"times":1,"cmd":"moheft"},
-    # "HBCS":{"times":1,"cmd":"hbcs"},
+    "HBCS":{"times":1,"cmd":"hbcs"},
+    "EBCS":{"times":1,"cmd":"ebcs"},
+    "LBCS":{"times":1,"cmd":"lbcs"},
 }
 
 ## DAG
@@ -68,12 +70,14 @@ query_cond = {
         "SPEA2-C3",
         "NSGA2-C3",
         "SPEA2-C5",
-        # "HBCS",
+        "HBCS",
+        "EBCS",
+        "LBCS",
         # "MOHEFT",
 
         "SPEA2-C3_c4",
     ],
-    "pop_size" : [20],
+    "pop_size" : [25],
 }
 
 ## Hypervolume
@@ -84,3 +88,4 @@ hv_ref = [1.01, 1.01]
 
 figure_path_pegasus_plot = "./results/"
 figure_path_pegasus_trace = "./results/trace/"
+figure_path_pegasus_bar = "./results/bar/"

@@ -2,7 +2,6 @@ module Heuristic.HBCS (hbcs) where
 
 import           Heuristic
 import           Heuristic.Cheap (cheap)
-import           Heuristic.HEFT  (heft)
 import           Problem
 
 import           Data.List       (maximumBy, minimumBy, sortBy)
@@ -46,15 +45,13 @@ instance PartialSchedule CPartial where
                           in cr * rcb / rb * 0.1 + tr
 
 empty::Pool pl=>Problem->Double->CPartial pl
-empty p k = CPar (prepare p) (Vec.replicate (nTask p) 0)
-            rb rcb 0 0 (Vec.replicate (nTask p) 0)
-  where cost_HEFT = (!!1) . calObjs p . heft $ p
-        cost_Cheapest = (!!1) . calObjs p . cheap $ p
-        rb = cost_Cheapest + k * (cost_HEFT - cost_Cheapest)
+empty p b = CPar (prepare p) (Vec.replicate (nTask p) 0)
+            b rcb 0 0 (Vec.replicate (nTask p) 0)
+  where cost_Cheapest = (!!1) . calObjs p . cheap $ p
         rcb = cost_Cheapest
 
 hbcs::Problem->Double->Schedule
-hbcs p k = head . schedule p 1 $ (empty p k ::CPartial InfinityPool)
+hbcs p b = head . schedule p 1 $ (empty p b ::CPartial InfinityPool)
 
 _ninf::Double
 _ninf = -1e42
