@@ -123,7 +123,7 @@ insPricePerCU p t = insPrice p t / cu p t
 
 data Schedule = Schedule { orderStr    :: [Task]
                          , task2insStr :: Vector Ins
-                         , ins2typeStr :: Vector InsType}
+                         , ins2typeStr :: Vector InsType} deriving (Show)
 
 task2ins::Schedule->Task->Ins
 task2ins a t = task2insStr a ! t

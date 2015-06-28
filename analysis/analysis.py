@@ -4,6 +4,7 @@ from utils import Normaliser
 from hv import HyperVolume
 from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, dag_pegasus, figure_path_pegasus_bar
 from query import query
+import pegasus
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -176,24 +177,17 @@ def show_trace(d, save=None):
 if __name__ == '__main__':
 	from sys import argv
 	keys = ["algorithm", "pop_size"]
-	if argv[1] == "time":
-		for dag in dag_pegasus:
-			print best_time(dag, keys)
-	elif argv[1] == "hv":
-		for dag in dag_pegasus:
-			print best_hvs(dag, keys)
-	elif argv[1] == "trace":
-		for dag in dag_pegasus:
-			plot_trace(evolve_history(dag, keys), dag)
-	elif argv[1] == "plot":
-		for dag in dag_pegasus:
-			plot_front(front_objs(dag, keys), dag)
-	elif argv[1] == "plot_d":
-		for dag in dag_pegasus:
-			plot_front(front_objs(dag, keys), dag, False)
-	elif argv[1] == "bar":
-		for dag in dag_pegasus:
-			plot_bar(budget_results(dag, keys), dag)
-	elif argv[1] == "show_trace":
-		dag = argv[2]
-		show_trace(evolve_history(dag, keys, False))
+	for w in pegasus.genWorkflow(task_number=pegasus.TASK_NUMBERS):
+		dag = w["dag"]
+		if argv[1] == "time":
+				print best_time(dag, keys)
+		elif argv[1] == "hv":
+				print best_hvs(dag, keys)
+		elif argv[1] == "trace":
+				plot_trace(evolve_history(dag, keys), dag)
+		elif argv[1] == "plot":
+				plot_front(front_objs(dag, keys), dag)
+		elif argv[1] == "plot_d":
+				plot_front(front_objs(dag, keys), dag, False)
+		elif argv[1] == "bar":
+				plot_bar(budget_results(dag, keys), dag)

@@ -31,8 +31,8 @@ instance PartialSchedule CPartial where
     where (_, ft, pl, pl') = allocIns p s t i
           c = cost pl' i - cost pl i
 
-  sortSchedule _ ss =  map (_update rcb) .
-                       reverse . sortBy (comparing _worthiness) $ ss
+  sortSchedule _ ss =  (:[]) . _update rcb .
+                       maximumBy (comparing _worthiness) $ ss
     where c_lowest = minimum . map _lastC $ ss
           c_highest = maximum . map _lastC $ ss
           CPar {_lastFT=ft_best, _lastC=c_best} = minimumBy (comparing _lastFT) ss

@@ -30,8 +30,9 @@ instance Service EC2 where
 
   s_charge s = sum . map (s_qcharge s) . insUsage
 
-  s_qcharge s (p, ts, te) = (*(prices s ! p)) $ fromIntegral hs
+  s_qcharge s (p, ts, te) = (prices s ! p) *  fromIntegral hs
     where hs = ceiling . (/3600) $ te - ts ::Int
+    -- where hs = (te - ts) / 3600
 
 -- Creation --
 

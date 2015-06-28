@@ -1,14 +1,12 @@
 module Heuristic.LBCS (lbcs) where
 
-import           Heuristic       (InfinityPool, PartialSchedule (..), Pool (..))
-import           Heuristic.Cheap (cheap)
-import           Heuristic.HEFT  (heft)
-import           Problem         (Cost, Ins, Problem, Schedule, Time, calObjs,
-                                  cu, nTask, nType, qcharge, refTime)
+import           Heuristic   (InfinityPool, PartialSchedule (..), Pool (..))
+import           Problem     (Cost, Ins, Problem, Schedule, Time, cu, nTask,
+                              nType, qcharge, refTime)
 
-import           Data.List       (sortBy)
-import           Data.Ord        (comparing)
-import qualified Data.Vector     as Vec
+import           Data.List   (minimumBy)
+import           Data.Ord    (comparing)
+import qualified Data.Vector as Vec
 
 data CPartial pl = CPar { _pool        :: pl
                         , _locations   :: Vec.Vector Ins
@@ -49,7 +47,7 @@ instance PartialSchedule CPartial where
           let cr = (ub - c_lowest) / (c_highest - c_lowest)
               tr = (ft - ft_best) / (ft_worst - ft_best)
           in (cr * r + tr * (1-r), tr, cr)
-    in sortBy (comparing _worthiness) ss
+    in [minimumBy (comparing _worthiness) ss]
 
 empty::Pool pl=>Problem->Double->CPartial pl
 empty p b = CPar (prepare p) (Vec.replicate (nTask p) 0)
@@ -57,4 +55,4 @@ empty p b = CPar (prepare p) (Vec.replicate (nTask p) 0)
   where rw = sum . map (refTime p) $ [0..nTask p-1]
 
 lbcs::Problem->Double->Schedule
-lbcs p b = head . schedule p 1 $ (empty p b ::CPartial InfinityPool)
+lbcs p b = head . schedule p 1 $ (empty p b :: CPartial InfinityPool)

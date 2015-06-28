@@ -62,6 +62,7 @@ import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
 import           EA.Selection                  (nullSelGen, rouletteSelGen,
                                                 tournamentSelGen)
 import           EA.SPEA2                      (assignSPEA2Fit, spea2Select)
+import           Heuristic.BHEFT               (bheft)
 import           Heuristic.Cheap               (cheap)
 import           Heuristic.EBCS                (ebcs)
 import           Heuristic.HBCS                (hbcs)
@@ -69,6 +70,7 @@ import           Heuristic.HEFT                (heft)
 import           Heuristic.LBCS                (lbcs)
 import           Heuristic.MLS                 (mls)
 import           Heuristic.MOHEFT              (moheft)
+import           Misc.LOSS                     (loss2, loss3)
 import           MOP                           (MakespanCost, ObjValue,
                                                 Objectives, getObjs, toList)
 import           Problem                       (Problem (Prob), Schedule,
@@ -129,6 +131,9 @@ process args = do
     case alg $ args of
     "heft"     -> dumpRes . (NullInfo,) $ map computeObjs [heft p]
     "cheap"    -> dumpRes . (NullInfo,) $ map computeObjs [cheap p]
+    "loss3"    -> runBudgetHeuristic p (popsize args) loss3
+    "loss2"    -> runBudgetHeuristic p (popsize args) loss2
+    "bheft"    -> runBudgetHeuristic p (popsize args) bheft
     "hbcs"     -> runBudgetHeuristic p (popsize args) hbcs
     "ebcs"     -> runBudgetHeuristic p (popsize args) ebcs
     "lbcs"     -> runBudgetHeuristic p (popsize args) lbcs
@@ -210,12 +215,16 @@ calBudget p k = let c_max = (!!1) . computeObjs $ heft p
                     c_min = (!!1) . computeObjs $ cheap p
                 in c_min + k * (c_max - c_min)
 
-data BudgetInfo = BI { budgets :: [Double]} deriving (Generic, Show)
+data BudgetInfo = BI { budgets  :: [Double]
+                     , heftRes  :: [Double]
+                     , cheapRes :: [Double]} deriving (Generic, Show)
 
 instance ToJSON BudgetInfo
 
 runBudgetHeuristic::Problem->Int->(Problem->Double->Schedule)->BL.ByteString
 runBudgetHeuristic p n alg =
-  let bs = [calBudget p (fromIntegral x/ fromIntegral n) | x<-[1..n]]
+  let heftRes@([_, c_max]) = computeObjs $ heft p
+      cheapRes@([_, c_min]) =  computeObjs $ cheap p
+      bs = [c_min + (fromIntegral x/fromIntegral n) * (c_max-c_min) | x<-[1..n]]
       rs = map (computeObjs . alg p) bs
-  in encode . RI rs $ BI bs
+  in encode . RI rs $ BI bs heftRes cheapRes
