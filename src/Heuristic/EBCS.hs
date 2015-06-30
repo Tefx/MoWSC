@@ -54,4 +54,4 @@ empty p b = CPar (prepare p) (Vec.replicate (nTask p) 0)
   where rw = sum . map (refTime p) $ [0..nTask p-1]
 
 ebcs::Problem->Double->Schedule
-ebcs p b = head . schedule p 1 $ (empty p b ::CPartial InfinityPool)
+ebcs p b = head . schedule p 1 $ (empty p b :: CPartial InfinityPool)

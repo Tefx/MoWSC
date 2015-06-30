@@ -68,6 +68,7 @@ import           Heuristic.EBCS                (ebcs)
 import           Heuristic.HBCS                (hbcs)
 import           Heuristic.HEFT                (heft)
 import           Heuristic.LBCS                (lbcs)
+import           Heuristic.MBCS                (mbcs)
 import           Heuristic.MLS                 (mls)
 import           Heuristic.MOHEFT              (moheft)
 import           Misc.LOSS                     (loss2, loss3)
@@ -137,6 +138,7 @@ process args = do
     "hbcs"     -> runBudgetHeuristic p (popsize args) hbcs
     "ebcs"     -> runBudgetHeuristic p (popsize args) ebcs
     "lbcs"     -> runBudgetHeuristic p (popsize args) lbcs
+    "mbcs"     -> runBudgetHeuristic p (popsize args) mbcs
     "moheft"   -> dumpRes . (NullInfo,) . map computeObjs . moheft p $ popsize args
     "mls"      -> dumpRes . (NullInfo,) . map computeObjs . mls p $ popsize args
 

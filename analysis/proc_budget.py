@@ -121,10 +121,13 @@ def set_box_color(bp, color):
 def plot_bar(d, by="k", y="Success Ratio", save=None):
 	fig, ax = plt.subplots()
 	plt.ylabel(y)
+	prefix = y.strip().split()[0]
 	if by == "k":
 		plt.xlabel('k_budget')
+		prefix = prefix + "_budget"
 	else:
 		plt.xlabel('Number of Tasks')
+		prefix = prefix + "_numtask"
 
 	i = 0
 	j = 0
@@ -146,7 +149,7 @@ def plot_bar(d, by="k", y="Success Ratio", save=None):
 	plt.legend(loc='lower right')
 
 	if save:
-		path = "./results/budget/%s_%s.jpg" % (save, by)
+		path = "./results/budget/%s_%s.jpg" % (prefix, save)
 		print "Writing %s..." % path
 		plt.savefig(path, format="jpeg")
 	else:
@@ -194,8 +197,8 @@ if __name__ == '__main__':
 	for app in pegasus.APPs:
 		res = fetch_info(app=app, task_number=pegasus.TASK_NUMBERS)
 		# print " Success Rates:"
-		# plot_bar(compute_sr(res, "k"), "k", "Success Rate", app)
-		# plot_bar(compute_sr(res, "n"), "n", "Success Rate", app)
+		plot_bar(compute_sr(res, "k"), "k", "Success Rate", app)
+		plot_bar(compute_sr(res, "n"), "n", "Success Rate", app)
 		# compute_sr(res, "n")
 		# print " Normalised Makespan:"
 		plot_bar(compute_nm(res, "k"), "k", "Ranking Count", app)
