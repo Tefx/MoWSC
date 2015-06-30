@@ -8,7 +8,7 @@ arg_tags = {
 }
 
 args_defaults = {
-    "pop_size" : 20,
+    "pop_size" : 10,
     "gen_num" : 1000,
     "prob_xo" : 1,
     "prob_mu" : 1,
@@ -25,12 +25,12 @@ experiments = {
     # "SPEA2-C5":{"cmd":"spea2_c5",},
     # "NSGA2-C3":{"cmd":"nsga2_c3"},
     # "MOHEFT":{"times":1,"cmd":"moheft"},
-    "LOSS2":{"times":1,"cmd":"loss2"},
+    # "LOSS2":{"times":1,"cmd":"loss2"},
     # "LOSS3":{"times":1,"cmd":"loss3"},
-    # "BHEFT":{"times":1,"cmd":"bheft"},
-    # "HBCS":{"times":1,"cmd":"hbcs"},
-    # "EBCS":{"times":1,"cmd":"ebcs"},
-    # "LBCS":{"times":1,"cmd":"lbcs"},
+    "BHEFT":{"times":1,"cmd":"bheft"},
+    "HBCS":{"times":1,"cmd":"hbcs"},
+    "EBCS":{"times":1,"cmd":"ebcs"},
+    "LBCS":{"times":1,"cmd":"lbcs"},
 }
 
 ## DAG
@@ -148,7 +148,7 @@ query_cond = {
         "SPEA2-C3",
         "NSGA2-C3",
         "SPEA2-C5",
-        "LOSS2",
+        # "LOSS2",
         "LOSS3",
         "BHEFT",
         "HBCS",
@@ -158,7 +158,7 @@ query_cond = {
 
         "SPEA2-C3_c4",
     ],
-    "pop_size" : [20],
+    "pop_size" : [10],
 }
 
 ## Hypervolume
