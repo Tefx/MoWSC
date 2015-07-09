@@ -40,7 +40,7 @@ def budget_results(dag, keys):
 	bs = fetch(dag, keys, "budgets")[0].values()[0][0]
 	res = {}
 	for alg, v in d.iteritems():
-		res[alg] = [[0,0] if r[1]>b else r for r,b in zip(v[0], bs)]
+		res[alg] = [r if r[1]>b else r for r,b in zip(v[0], bs)]
 	return res
 
 def best_hvs(dag, keys):
@@ -99,7 +99,7 @@ def plot_bar(d, save=None):
 		j += bar_width
 		i += 1
 
-	# plt.xticks(index + 0.35, bs)
+	plt.xticks(index + 0.35, range(len(d)))
 	plt.legend()
 
 	if save:
@@ -177,7 +177,7 @@ def show_trace(d, save=None):
 if __name__ == '__main__':
 	from sys import argv
 	keys = ["algorithm", "pop_size"]
-	for w in pegasus.genWorkflow(task_number=pegasus.TASK_NUMBERS):
+	for w in pegasus.genWorkflow(task_number=["default"]):
 		dag = w["dag"]
 		if argv[1] == "time":
 				print best_time(dag, keys)

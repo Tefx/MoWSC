@@ -27,13 +27,11 @@ instance Service EC2 where
   s_insPrice s = (prices s !)
   s_nType = Vec.length . ecus
   s_maxIns = insLimit
-
-  s_charge s = sum . map (s_qcharge s) . insUsage
-
   s_qcharge s (p, ts, te) = (prices s ! p) *  fromIntegral hs
     where hs = ceiling . (/3600) $ te - ts ::Int
-    -- where hs = (te - ts) / 3600
 
+  --s_qcharge s (p, ts, te) = (prices s ! p) / 60 * fromIntegral hs
+  --  where hs = ceiling . (/60) $ te - ts :: Int
 -- Creation --
 
 data InsItem = InsItem { name      :: String

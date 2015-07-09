@@ -212,11 +212,6 @@ eaSPEA2_C5 = spea2 randTypeSRH
 eaMOABC::ExpType MakespanCost C0
 eaMOABC = abc randPoolOrHeft
 
-calBudget::Problem->Double->Double
-calBudget p k = let c_max = (!!1) . computeObjs $ heft p
-                    c_min = (!!1) . computeObjs $ cheap p
-                in c_min + k * (c_max - c_min)
-
 data BudgetInfo = BI { budgets  :: [Double]
                      , heftRes  :: [Double]
                      , cheapRes :: [Double]} deriving (Generic, Show)
@@ -225,8 +220,8 @@ instance ToJSON BudgetInfo
 
 runBudgetHeuristic::Problem->Int->(Problem->Double->Schedule)->BL.ByteString
 runBudgetHeuristic p n alg =
-  let heftRes@([_, c_max]) = computeObjs $ heft p
-      cheapRes@([_, c_min]) =  computeObjs $ cheap p
+  let heftRes@([_, c_max]) = calObjs p $ heft p
+      cheapRes@([_, c_min]) =  calObjs p $ cheap p
       bs = [c_min + (fromIntegral x/fromIntegral n) * (c_max-c_min) | x<-[1..n]]
-      rs = map (computeObjs . alg p) bs
+      rs = map (calObjs p . alg p) bs
   in encode . RI rs $ BI bs heftRes cheapRes

@@ -42,7 +42,7 @@ instance PartialSchedule CPartial where
             | c > c_best || c > rb - rcb = _ninf
             | otherwise = let tr = (ft_worst - ft) / (ft_worst - ft_best)
                               cr = (c_best - c) / (c_highest - c_lowest)
-                          in cr * rcb / rb * 0.1 + tr
+                          in cr * rcb / rb + tr
 
 empty::Pool pl=>Problem->Double->CPartial pl
 empty p b = CPar (prepare p) (Vec.replicate (nTask p) 0)

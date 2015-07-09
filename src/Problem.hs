@@ -66,6 +66,7 @@ class Service s where
   s_typeLimit s _ = s_maxIns s
 
   s_charge::s->Account->Cost
+  s_charge s = sum . map (s_qcharge s) . insUsage
 
   s_insPrice::s->InsType->Cost
 

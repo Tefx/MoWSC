@@ -27,11 +27,11 @@ experiments = {
     # "MOHEFT":{"times":1,"cmd":"moheft"},
     # "LOSS2":{"times":1,"cmd":"loss2"},
     # "LOSS3":{"times":1,"cmd":"loss3"},
-    # "BHEFT":{"times":1,"cmd":"bheft"},
+    "BHEFT":{"times":1,"cmd":"bheft"},
     "HBCS":{"times":1,"cmd":"hbcs"},
     "EBCS":{"times":1,"cmd":"ebcs"},
     "LBCS":{"times":1,"cmd":"lbcs"},
-    "MBCS":{"times":1,"cmd":"mbcs"},
+    # "MBCS":{"times":1,"cmd":"mbcs"},
 }
 
 ## DAG

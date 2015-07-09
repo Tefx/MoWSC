@@ -33,18 +33,18 @@ instance PartialSchedule CPartial where
           c = cost pl' i - cost pl i
 
   sortSchedule p ss =
-    let c_lowest = minimum . map _usedBudget $ ss
-        c_highest = maximum . map _usedBudget $ ss
+    let ub_lowest = minimum . map _usedBudget $ ss
+        ub_highest = maximum . map _usedBudget $ ss
         ft_best = minimum . map _lastFT $ ss
         ft_worst = maximum . map _lastFT $ ss
         rw = _remainWork $ head ss
         rcb = minimum [qcharge p (ct, 0, rw / cu p ct)|ct<-[0..nType p-1]]
         b = _budget $ head ss
-        r = if b <= rcb + c_lowest then 1 else
-              if b > rcb + c_highest then 0 else
-                (rcb + c_highest - b) / (c_highest - c_lowest)
+        r = if b <= rcb + ub_lowest then 1 else
+              if b > rcb + ub_highest then 0 else
+                (rcb + ub_highest - b) / (ub_highest - ub_lowest)
         _worthiness CPar { _usedBudget=ub, _lastFT=ft} =
-          let cr = (ub - c_lowest) / (c_highest - c_lowest)
+          let cr = (ub - ub_lowest) / (ub_highest - ub_lowest)
               tr = (ft - ft_best) / (ft_worst - ft_best)
           in (cr * r + tr * (1-r), tr, cr)
     in [minimumBy (comparing _worthiness) ss]
