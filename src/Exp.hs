@@ -63,6 +63,7 @@ import           EA.Selection                  (nullSelGen, rouletteSelGen,
                                                 tournamentSelGen)
 import           EA.SPEA2                      (assignSPEA2Fit, spea2Select)
 import           Heuristic.BHEFT               (bheft)
+import           Heuristic.BHI                 (bhie, bhie2, bhil, bhir)
 import           Heuristic.Cheap               (cheap)
 import           Heuristic.EBCS                (ebcs)
 import           Heuristic.HBCS                (hbcs)
@@ -138,6 +139,10 @@ process args = do
     "hbcs"     -> runBudgetHeuristic p (popsize args) hbcs
     "ebcs"     -> runBudgetHeuristic p (popsize args) ebcs
     "lbcs"     -> runBudgetHeuristic p (popsize args) lbcs
+    "bhil"     -> runBudgetHeuristic p (popsize args) bhil
+    "bhie"     -> runBudgetHeuristic p (popsize args) bhie
+    "bhie2"    -> runBudgetHeuristic p (popsize args) bhie2
+    "bhir"    -> runBudgetHeuristic p (popsize args) bhir
     "mbcs"     -> runBudgetHeuristic p (popsize args) mbcs
     "moheft"   -> dumpRes . (NullInfo,) . map computeObjs . moheft p $ popsize args
     "mls"      -> dumpRes . (NullInfo,) . map computeObjs . mls p $ popsize args

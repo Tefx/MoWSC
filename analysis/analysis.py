@@ -40,7 +40,7 @@ def budget_results(dag, keys):
 	bs = fetch(dag, keys, "budgets")[0].values()[0][0]
 	res = {}
 	for alg, v in d.iteritems():
-		res[alg] = [r if r[1]>b else r for r,b in zip(v[0], bs)]
+		res[alg] = [[0,0] if r[1]>b else r for r,b in zip(v[0], bs)]
 	return res
 
 def best_hvs(dag, keys):

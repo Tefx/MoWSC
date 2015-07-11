@@ -63,13 +63,14 @@ def compute_sr(res, by="k"):
 def compute_nm(res, by="k"):
 	ff = lambda l: [x for x in l if x != None]
 	avg = lambda l: float(sum(l)) / float(len(l)) if l != [] else None
+	top_rank = lambda l: 0 if len(l)==0 else (sum(l) / float(len(l)))
 
 	ret = {}
 	for alg in res.keys():
 		if by == "k":
-			ret[alg] = map(sum, map(ff, zip(*res[alg].values())))
+			ret[alg] = map(top_rank, map(ff, zip(*res[alg].values())))
 		elif by == "n":
-			ret[alg] = [sum(ff(res[alg][nt])) for nt in pegasus.TASK_NUMBERS]
+			ret[alg] = [top_rank(ff(res[alg][nt])) for nt in pegasus.TASK_NUMBERS]
 	return ret
 
 	# fmax = lambda l: max(l) if l != [] else None
