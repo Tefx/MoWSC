@@ -8,7 +8,7 @@ arg_tags = {
 }
 
 args_defaults = {
-    "pop_size" : 10,
+    "pop_size" : 5,
     "gen_num" : 1000,
     "prob_xo" : 1,
     "prob_mu" : 1,
@@ -25,15 +25,15 @@ experiments = {
     # "SPEA2-C5":{"cmd":"spea2_c5",},
     # "NSGA2-C3":{"cmd":"nsga2_c3"},
     # "MOHEFT":{"times":1,"cmd":"moheft"},
-    "LOSS2":{"times":1,"cmd":"loss2"},
+    # "LOSS2":{"times":1,"cmd":"loss2"},
     # "LOSS3":{"times":1,"cmd":"loss3"},
     "BHEFT":{"times":1,"cmd":"bheft"},
     "HBCS":{"times":1,"cmd":"hbcs"},
-    # "EBCS":{"times":1,"cmd":"ebcs"},
-    # "LBCS":{"times":1,"cmd":"lbcs"},
+    # # "EBCS":{"times":1,"cmd":"ebcs"},
+    # # "LBCS":{"times":1,"cmd":"lbcs"},
     "BHI/L":{"times":1,"cmd":"bhil"},
     "BHI/E":{"times":1,"cmd":"bhie"},
-    # "BHI/E2":{"times":1,"cmd":"bhie2"},
+    "BHI/E2":{"times":1,"cmd":"bhie2"},
     # "BHI/R":{"times":1,"cmd":"bhir"},
     # "MBCS":{"times":1,"cmd":"mbcs"},
 }
@@ -159,13 +159,14 @@ query_cond = {
         # "LBCS",
         "BHI/L",
         "BHI/E",
+        "BHEFT",
         # "BHI/E2",
         # "BHI/R",
         # "MOHEFT",
 
         "SPEA2-C3_c4",
     ],
-    "pop_size" : [10],
+    "pop_size" : [5],
 }
 
 ## Hypervolume

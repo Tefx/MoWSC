@@ -68,9 +68,9 @@ def compute_nm(res, by="k"):
 	ret = {}
 	for alg in res.keys():
 		if by == "k":
-			ret[alg] = map(top_rank, map(ff, zip(*res[alg].values())))
+			ret[alg] = map(sum, map(ff, zip(*res[alg].values())))
 		elif by == "n":
-			ret[alg] = [top_rank(ff(res[alg][nt])) for nt in pegasus.TASK_NUMBERS]
+			ret[alg] = [sum(ff(res[alg][nt])) for nt in pegasus.TASK_NUMBERS]
 	return ret
 
 	# fmax = lambda l: max(l) if l != [] else None
@@ -147,7 +147,9 @@ def plot_bar(d, by="k", y="Success Ratio", save=None):
 		i += 1
 
 	plt.xticks(index + 0.35, x)
-	plt.legend(loc='lower right')
+	plt.ylim(ymin=0, ymax=1.1)
+	# plt.legend(loc='lower right')
+	plt.tight_layout()
 
 	if save:
 		path = "./results/budget/%s_%s.jpg" % (prefix, save)
@@ -185,7 +187,7 @@ def plot_box(d, by="k", save=None):
 		i += 1
 
 	plt.xticks(index + 0.35, x)
-	plt.legend()
+	# plt.legend()
 
 	if save:
 		path = "./results/budget/%s_%s.jpg" % (save, by)
@@ -194,15 +196,42 @@ def plot_box(d, by="k", save=None):
 	else:
 		plt.show()
 
+def print_sr(res, by, app):
+	print app
+	if by == "k":
+		print "k", " ".join(map(str, genK(len(res.values()[0]))))
+	else:
+		print "n", " ".join(map(str, pegasus.TASK_NUMBERS))
+
+	for k,v in res.iteritems():
+		print k, " ".join(["{:.0%}".format(x) for x in v])
+
+def print_nm(res, by, app):
+	if by == "k":
+		print "alg", "k", " ".join(map(str, genK(len(res.values()[0]))))
+	else:
+		print "alg", "n", " ".join(map(str, pegasus.TASK_NUMBERS))
+
+	for k,v in res.iteritems():
+		print app, k, " ".join(map(str, v))
+
+def setup_mpl():
+    fig_width_pt = 280  # Get this from LaTeX using \showthe\columnwidth
+    inches_per_pt = 1.0/72.27               # Convert pt to inch
+    fig_width = fig_width_pt*inches_per_pt  # width in inches
+    fig_height = fig_width_pt*inches_per_pt * 0.8 # height in inches
+    fig_size =  [fig_width,fig_height]
+    params = {'figure.figsize': fig_size}
+    mpl.rcParams.update(params)
+
 if __name__ == '__main__':
+	setup_mpl()
 	for app in pegasus.APPs:
 		res = fetch_info(app=app, task_number=pegasus.TASK_NUMBERS)
-		# print " Success Rates:"
-		plot_bar(compute_sr(res, "k"), "k", "Success Rate", app)
-		plot_bar(compute_sr(res, "n"), "n", "Success Rate", app)
-		# compute_sr(res, "n")
-		# print " Normalised Makespan:"
-		plot_bar(compute_nm(res, "k"), "k", "Ranking Count", app)
-		plot_bar(compute_nm(res, "n"), "n", "Ranking COunt", app)
-		# compute_nm(res, "n")
-		# print
+		# plot_bar(compute_sr(res, "k"), "k", "Success Rate", app)
+		# plot_bar(compute_sr(res, "n"), "n", "Success Rate", app)
+		# plot_bar(compute_nm(res, "k"), "k", "Ranking Count", app)
+		# plot_bar(compute_nm(res, "n"), "n", "Ranking COunt", app)
+
+		# print_sr(compute_sr(res, "k"), "k", app)
+		print_nm(compute_nm(res, "k"), "k", app)
