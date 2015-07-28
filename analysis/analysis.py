@@ -13,7 +13,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from itertools import chain
 import numpy as np
 
-colors = "bgrcmykw"
+colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
+hatches = [1*'/', 2*'\\', 3*'/', 4*'x', 5*'.']
 
 def fetch(dag, keys, field, initNZ=None):
 	d = {}
@@ -82,7 +83,8 @@ def nonDom(x, xs):
 def pareto_filter(xs):
 	return [x for x in xs if nonDom(x, xs)]
 
-def plot_bar(d, save=None):
+def plot_bar(d, save=None, legendsave=None):
+	setup_mpl()
 	max_1 = 0
 	max_2 = 0
 	for alg, res in d.iteritems():
@@ -95,40 +97,56 @@ def plot_bar(d, save=None):
 				max_2 = max(l1)
 	max_1 = max_1 * 1.1
 	h0 = max_1 / 4
-
 	if max_2 - h0 > max_1:
 		return split_plot_bar(max_1, max_2, d, save)
 
 	fig, ax = plt.subplots()
-	plt.xlabel('Budget Ratio')
-	plt.ylabel('Time(s)')
-	ax.locator_params(axis = 'y', nbins = 9)
+	plt.xlabel('$k_{budget}$')
+	plt.ylabel('time(s)')
+	ax.locator_params(axis = 'y', nbins = 8)
 
 	i = 0
 	j = 0
-	colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
-	bar_width = 0.7 / len(d)
-	for alg, res in d.iteritems():
-		index = np.arange(len(res))
+	bar_width = 0.8 / len(d)
+	bars = []
+	algs = []
+	# for alg, res in d.iteritems():
+	for alg in ["BHEFT", "LOSS2", "HBCS", "BHI/L", "BHI/E"]:
+		res = d[alg]
+		index = np.arange(len(res))+0.1
 		l1 = [x[0] for x in res]
-		plt.bar(index + j, l1, bar_width, color=colors[i], label=alg)
+		# bar = ax.bar(index + j, l1, bar_width, color=colors[i], label=alg)[0]
+		# bar = ax.bar(index + j, l1, bar_width, cmap=mpl.cm.gray, label=alg)[0]
+		bar = ax.bar(index + j, l1, bar_width, color="white", ecolor="black", hatch=hatches[i], label=alg)[0]
+		bars.append(bar)
+		algs.append(alg)
 		# plt.plot(l1, marker="+")
 		j += bar_width
 		i += 1
 
-	# plt.ylim(ymin=1, ymax=max_1)
-	plt.xticks(index + 0.35, [float(x+1)/len(l1) for x in range(len(l1))])
-	# plt.legend()
+	mkfunc = lambda x, pos: '%1.1fM' % (x * 1e-6) if x >= 1e6 else '%1.1fK' % (x * 1e-3) if x >= 1e3 else '%1.1f' % x
+	mkformatter = mpl.ticker.FuncFormatter(mkfunc)
+	ax.yaxis.set_major_formatter(mkformatter)
+
+	ax.set_xlim(0, len(l1))
+	plt.xticks(index + 0.4, [float(x+1)/len(l1) for x in range(len(l1))])
 	plt.tight_layout()
 
 
 	if save:
 		print "Writing %s ..." % (figure_path_pegasus_bar+save+".jpg")
 		plt.savefig(figure_path_pegasus_bar+save+".jpg", format="jpeg")
+		if legendsave:
+			legendfig, ax = plt.subplots(figsize=(16, 0.5))
+			legendfig.legend(bars, algs, ncol=len(bars), loc="center")
+			ax.set_visible(False)
+			legendfig.savefig(figure_path_pegasus_bar+legendsave, format="jpeg")
 	else:
+		plt.legend()
 		plt.show()
 
-def split_plot_bar(max0, max1, d, save):
+def split_plot_bar(max0, max1, d, save, legendsave=None):
+	setup_mpl()
 	# fig, (ax0, ax1) = plt.subplots(2, 1, sharex=True)
 	fig = plt.figure()
 	ax0 = plt.subplot2grid((3, 1), (0, 0), rowspan=1)
@@ -138,17 +156,20 @@ def split_plot_bar(max0, max1, d, save):
 	ax0.set_ylim(max1-h0, max1+h0)
 	ax1.set_ylim(0, max0)
 	ax0.locator_params(axis = 'y', nbins = 3)
-	ax1.locator_params(axis = 'y', nbins = 6)
+	ax1.locator_params(axis = 'y', nbins = 5)
 
 	i = 0
 	j = 0
-	colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
-	bar_width = 0.7 / len(d)
-	for alg, res in d.iteritems():
+	bar_width = 0.8 / len(d)
+	# for alg, res in d.iteritems():
+	for alg in ["BHEFT", "LOSS2", "HBCS", "BHI/L", "BHI/E"]:
+		res = d[alg]
 		index = np.arange(len(res))
 		l1 = [x[0] for x in res]
-		ax0.bar(index + j, l1, bar_width, color=colors[i], label=alg)
-		ax1.bar(index + j, l1, bar_width, color=colors[i], label=alg)
+		# ax0.bar(index + j+0.1, l1, bar_width, color=colors[i], label=alg)
+		# ax1.bar(index + j+0.1, l1, bar_width, color=colors[i], label=alg)
+		ax0.bar(index + j+0.1, l1, bar_width, color="white", ecolor="black", hatch=hatches[i], label=alg)
+		ax1.bar(index + j+0.1, l1, bar_width, color="white", ecolor="black", hatch=hatches[i], label=alg)
 		j += bar_width
 		i += 1
 
@@ -157,21 +178,26 @@ def split_plot_bar(max0, max1, d, save):
 	ax0.xaxis.tick_top()
 	ax0.tick_params(labeltop='off') # don't put tick labels at the top
 	ax1.xaxis.tick_bottom()
+	ax1.set_xlim(0, len(l1))
 
-	ax1.set_xlabel('k_Budget')
-	plt.ylabel('Time(s)')
+	ax1.set_xlabel('$k_{budget}$')
+	ax1.set_ylabel('time(s)')
 	ax1.yaxis.set_label_coords(0.05, 0.5, transform=fig.transFigure)
-	plt.xticks(index + 0.35, [float(x+1)/len(l1) for x in range(len(l1))])
-	plt.subplots_adjust(hspace=0.01)
+	plt.xticks(index + 0.5, [float(x+1)/len(l1) for x in range(len(l1))])
+
+	mkfunc = lambda x, pos: '%1.1fM' % (x * 1e-6) if x >= 1e6 else '%1.1fK' % (x * 1e-3) if x >= 1e3 else '%1.1f' % x
+	mkformatter = mpl.ticker.FuncFormatter(mkfunc)
+	ax0.yaxis.set_major_formatter(mkformatter)
+	ax1.yaxis.set_major_formatter(mkformatter)
 
 	d = .015
 	kwargs = dict(transform=ax0.transAxes, color='k', clip_on=False)
-	ax0.plot((-d,+d),(-d*2,+d*2), **kwargs)      # top-left diagonal
-	ax0.plot((1-d,1+d),(-d*2,+d*2), **kwargs)    # top-right diagonal
+	ax0.plot((-d,+d),(0,0), **kwargs)      # top-left diagonal
+	ax0.plot((1-d,1+d),(0,0), **kwargs)    # top-right diagonal
 
 	kwargs.update(transform=ax1.transAxes)  # switch to the bottom axes
-	ax1.plot((-d,+d),(1-d, 1+d), **kwargs)   # bottom-left diagonal
-	ax1.plot((1-d,1+d),(1-d, 1+d), **kwargs) # bottom-right diagonal
+	ax1.plot((-d,+d),(1, 1), **kwargs)   # bottom-left diagonal
+	ax1.plot((1-d,1+d),(1, 1), **kwargs) # bottom-right diagonal
 
 	plt.tight_layout()
 
@@ -253,10 +279,10 @@ def show_trace(d, save=None):
 	plt.show()
 
 def setup_mpl():
-    fig_width_pt = 280  # Get this from LaTeX using \showthe\columnwidth
+    fig_width_pt = 230  # Get this from LaTeX using \showthe\columnwidth
     inches_per_pt = 1.0/72.27               # Convert pt to inch
     fig_width = fig_width_pt*inches_per_pt  # width in inches
-    fig_height = fig_width_pt*inches_per_pt * 0.8 # height in inches
+    fig_height = fig_width_pt*inches_per_pt * 0.75 # height in inches
     fig_size =  [fig_width,fig_height]
     params = {'figure.figsize': fig_size}
     mpl.rcParams.update(params)
@@ -278,7 +304,6 @@ if __name__ == '__main__':
 		elif argv[1] == "plot_d":
 			plot_front(front_objs(dag, keys), dag, False)
 		elif argv[1] == "bar":
-			setup_mpl()
-			plot_bar(budget_results(dag, keys), dag)
+			plot_bar(budget_results(dag, keys), dag, "reallegend.jpg")
 		elif argv[1] == "pb":
 			print_res(dag, budget_results(dag, keys))

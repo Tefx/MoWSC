@@ -63,7 +63,8 @@ if __name__ == '__main__':
             init_db()
     else:
         pool = Pool(4)
-        for w in pegasus.genWorkflow(task_number=pegasus.TASK_NUMBERS):
+        # for w in pegasus.genWorkflow(task_number=pegasus.TASK_NUMBERS):
+        for w in pegasus.genWorkflow():
             for exp, conf in experiments.iteritems():
                 for cmd, conf in gen_cmd(w, exp, conf):
                     pool.spawn(run_exp, cmd, conf)

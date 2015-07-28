@@ -8,6 +8,11 @@ import matplotlib as mpl
 # mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import FuncFormatter
+
+colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
+# hatches = [2*'/', 2*'+', 2*'\\', 4*'.', 4*'x']
+hatches = [1*'/', 2*'\\', 3*'/', 4*'x', 5*'.']
 
 def norm(x,x_max,x_min): 
 	if not x:
@@ -43,7 +48,6 @@ def fetch_info(app=pegasus.APPs[1], task_number=["default"]):
 				if norm_res[alg][k][i] != None:
 					norm_res[alg][k][i] = 1 if norm_res[alg][k][i] == t_min else 0
 				# norm(norm_res[alg][k][i], t_max, t_min)
-
 	return norm_res
 
 def compute_sr(res, by="k"):
@@ -119,34 +123,48 @@ def set_box_color(bp, color):
     plt.setp(bp['caps'], color=color)
     plt.setp(bp['medians'], color=color)
 
-def plot_bar(d, by="k", y="Success Ratio", save=None):
+
+def to_percent(y, position):
+    return str(int(100 * y)) + '$\%$'
+
+def plot_bar(d, by="k", y="Success Rate", save=None, legendsave=None):
 	fig, ax = plt.subplots()
 	plt.ylabel(y)
 	prefix = y.strip().split()[0]
 	if by == "k":
-		plt.xlabel('k_budget')
+		plt.xlabel('$k_{budget}$')
 		prefix = prefix + "_budget"
 	else:
-		plt.xlabel('Number of Tasks')
+		plt.xlabel('$n$')
 		prefix = prefix + "_numtask"
 
 	i = 0
 	j = 0
-	colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k']
-	bar_width = 0.7 / len(d)
+	bar_width = 0.8 / len(d)
 
 	if by == "k":
 		x = list(genK(len(d.values()[0])))
 	else:
 		x = pegasus.TASK_NUMBERS
 	
-	for alg, res in d.iteritems():
+	bars = []
+	algs = []
+	# for alg, res in d.iteritems():
+	for alg in ["BHEFT", "LOSS2", "HBCS", "BHI/L", "BHI/E"]:
+		res = d[alg]
 		index = np.arange(len(res))
-		plt.bar(index + j, res, bar_width, color=colors[i], label=alg)
+		# bar = plt.bar(index + j + 0.1, res, bar_width, color=colors[i], label=alg)[0]
+		bar = plt.bar(index + j + 0.1, res, bar_width, color="white", ecolor="black", hatch=hatches[i], label=alg)[0]
+		bars.append(bar)
+		algs.append(alg)
 		j += bar_width
 		i += 1
 
-	plt.xticks(index + 0.35, x)
+	if y == "Success Rate":
+		formatter = FuncFormatter(to_percent)
+		plt.gca().yaxis.set_major_formatter(formatter)
+
+	plt.xticks(index + 0.5, x)
 	plt.ylim(ymin=0, ymax=1.1)
 	# plt.legend(loc='lower right')
 	plt.tight_layout()
@@ -155,6 +173,11 @@ def plot_bar(d, by="k", y="Success Ratio", save=None):
 		path = "./results/budget/%s_%s.jpg" % (prefix, save)
 		print "Writing %s..." % path
 		plt.savefig(path, format="jpeg")
+		if legendsave:
+			legendfig, ax = plt.subplots(figsize=(4, 3))
+			legendfig.legend(bars, algs, loc="upper center")
+			ax.set_visible(False)
+			legendfig.savefig("./results/budget/"+legendsave, format="jpeg")
 	else:
 		plt.show()
 
@@ -216,10 +239,10 @@ def print_nm(res, by, app):
 		print app, k, " ".join(map(str, v))
 
 def setup_mpl():
-    fig_width_pt = 280  # Get this from LaTeX using \showthe\columnwidth
+    fig_width_pt = 230  # Get this from LaTeX using \showthe\columnwidth
     inches_per_pt = 1.0/72.27               # Convert pt to inch
     fig_width = fig_width_pt*inches_per_pt  # width in inches
-    fig_height = fig_width_pt*inches_per_pt * 0.8 # height in inches
+    fig_height = fig_width_pt*inches_per_pt * 0.63 # height in inches
     fig_size =  [fig_width,fig_height]
     params = {'figure.figsize': fig_size}
     mpl.rcParams.update(params)
@@ -228,10 +251,11 @@ if __name__ == '__main__':
 	setup_mpl()
 	for app in pegasus.APPs:
 		res = fetch_info(app=app, task_number=pegasus.TASK_NUMBERS)
-		# plot_bar(compute_sr(res, "k"), "k", "Success Rate", app)
-		# plot_bar(compute_sr(res, "n"), "n", "Success Rate", app)
-		# plot_bar(compute_nm(res, "k"), "k", "Ranking Count", app)
-		# plot_bar(compute_nm(res, "n"), "n", "Ranking COunt", app)
+		plot_bar(compute_sr(res, "k"), "k", "Success Rate", app, "srklegend.jpg")
+		plot_bar(compute_sr(res, "n"), "n", "Success Rate", app, "srnlegend.jpg")
+
+		# plot_bar(compute_nm(res, "k"), "k", "Numbers of the best schedules", app, "srklegend.jpg")
+		# plot_bar(compute_nm(res, "n"), "n", "Numbers of the best schedules", app, "srnlegend.jpg")
 
 		# print_sr(compute_sr(res, "k"), "k", app)
-		print_nm(compute_nm(res, "k"), "k", app)
+		# print_nm(compute_nm(res, "n"), "n", app)

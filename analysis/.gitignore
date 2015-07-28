@@ -1,2 +1,8 @@
 *.pyc
 *.ps
+/gendag.json
+/gendag.json-nodesign
+/gendag.json.design
+/realdag.json
+/realdag.json-nodesign
+/realdag.json.design
