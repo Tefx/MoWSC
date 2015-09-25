@@ -7,6 +7,7 @@ import           Data.List   (minimumBy)
 import           Data.Ord    (comparing)
 import           Data.Vector ((//))
 import qualified Data.Vector as Vec
+import Control.DeepSeq (NFData (..))
 
 data CPartial pl = CPar { _pool        :: pl
                         , _r           :: [Double]
@@ -14,6 +15,10 @@ data CPartial pl = CPar { _pool        :: pl
                         , _cc          :: Double
                         , _finishTimes :: Vec.Vector Time
                         , _locations   :: Vec.Vector Ins}
+
+instance (NFData pl)=>NFData (CPartial pl) where
+  rnf (CPar a b c d e f) =
+    rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e `seq` rnf f
 
 _worth::Double->Double->Double->Double->Double->CPartial pl->Double
 _worth t0 dt c0 dc r (CPar _ _ ct cc _ _) = r * (ct - t0) / dt + (1-r) * (cc - c0) / dc

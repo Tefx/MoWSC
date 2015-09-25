@@ -31,7 +31,7 @@ uint32_t xor128(void) {
 }
 
 uint64_t xor128add(void) {
-    static uint64_t s[2];
+    static uint64_t s[2]={0,0};
     uint64_t s1;
 
     if (!seed_init) {

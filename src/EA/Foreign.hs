@@ -1,7 +1,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RankNTypes               #-}
 
-module EA.Foreign (spea2Select) where
+module EA.Foreign (spea2Select, nsga2Select) where
 
 import           Data.Functor          ((<$>))
 import qualified Data.Vector           as Vec
@@ -18,6 +18,7 @@ import           MOP                   (WithObjs (..), (@!))
 type CEnvSelector = Ptr CDouble->Ptr CDouble->CSize->CSize->Ptr CSize->IO ()
 
 foreign import ccall "spea2.h spea2_select_2d" c_spea2Select::CEnvSelector
+foreign import ccall "nsga2.h nsga2_select_2d" c_nsga2Select::CEnvSelector
 
 cSelectorWrapper::CEnvSelector->EnvSelector
 cSelectorWrapper cSel p0 p1 = unsafePerformIO $ do
@@ -37,3 +38,6 @@ cSelectorWrapper cSel p0 p1 = unsafePerformIO $ do
 
 spea2Select::EnvSelector
 spea2Select = cSelectorWrapper c_spea2Select
+
+nsga2Select::EnvSelector
+nsga2Select = cSelectorWrapper c_nsga2Select

@@ -1,0 +1,5 @@
+*.make
+/cmake_clean.cmake
+/DependInfo.cmake
+/depend.internal
+/C.includecache

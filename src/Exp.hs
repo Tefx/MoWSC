@@ -54,11 +54,13 @@ import           EA                            (Chromosome, EASetup (..),
                                                 ExtraEAInfo, Individual,
                                                 NullInfo (..), PopInitialiser,
                                                 Population, abcBreeder, evalEA,
-                                                normalBreeder, normalBreederF)
+                                                normalBreeder, normalBreederF,
+                                                psoBreeder, psoESel, psoMSel)
 import           EA.Chromosome
 import qualified EA.Foreign                    as EF
 import           EA.Init
 import           EA.NSGA2                      (assignNSGA2Fit, nsga2Select)
+import           EA.PSO                        (Particle)
 import           EA.Selection                  (nullSelGen, rouletteSelGen,
                                                 tournamentSelGen)
 import           EA.SPEA2                      (assignSPEA2Fit, spea2Select)
@@ -121,7 +123,6 @@ process::Exp->IO ()
 process args = do
   w <- DAG.fromFile . head $ file args
   s <- EC2.mkService $ limit args
-  -- g <- newPureMT
   g <- newXorshift
   let p = Prob w s
       ec = EASetup { numGen = gen $ args
@@ -152,6 +153,7 @@ process args = do
     "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
     "spea2_c5" -> dumpRes . runEA g $ eaSPEA2_C5 p ec
     "moabc" -> dumpRes . runEA g $ eaMOABC p ec
+    "nspso" -> dumpRes . runEA g $ eaNSPSO p ec
   finishProblem
 
 
@@ -192,7 +194,7 @@ nsga2 i p c = evalEA p c $ EAToolbox { popInit = i
 spea2::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
 spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , mutSel = nullSelGen
-                                     , envSel = EF.spea2Select
+                                     , envSel = spea2Select
                                      , breeder = normalBreederF}
 
 abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
@@ -202,6 +204,12 @@ abc i p c = evalEA p c' $ EAToolbox { popInit = i
                                     , breeder = abcBreeder}
   where c' = c{numGen=numGen c `quot` 2}
 
+pso::(Objectives o)=>PopInitialiser->ExpType o Particle
+pso i p c = evalEA p c $ EAToolbox { popInit = i
+                                   , mutSel = psoMSel
+                                   , envSel = psoESel
+                                   , breeder = psoBreeder EF.nsga2Select}
+
 eaNSGA2_C3::ExpType MakespanCost C3
 eaNSGA2_C3 = nsga2 randTypeSRH
 
@@ -209,13 +217,16 @@ eaSPEA2_C0::ExpType MakespanCost C0
 eaSPEA2_C0 = spea2 randPoolOrHeft
 
 eaSPEA2_C3::ExpType MakespanCost C3
-eaSPEA2_C3 = spea2 randTypeSRH
+eaSPEA2_C3 = spea2 randPoolOrHeft
 
 eaSPEA2_C5::ExpType MakespanCost C5
 eaSPEA2_C5 = spea2 randTypeSRH
 
 eaMOABC::ExpType MakespanCost C0
 eaMOABC = abc randPoolOrHeft
+
+eaNSPSO::ExpType MakespanCost Particle
+eaNSPSO = pso randPoolOrHeft
 
 data BudgetInfo = BI { budgets  :: [Double]
                      , heftRes  :: [Double]

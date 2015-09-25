@@ -94,13 +94,6 @@ mutateBySplitting o hs = do
      (IntSet.null $ _tasks h1)
     then return hs
     else return . Vec.cons h1 $ hs // [(p, h0)]
-  -- let prob = 1 / (fromIntegral $ Vec.length hs)
-  -- --hss <- flip Vec.mapM hs $ join . doWithProb prob (_splitMutate o) (return . (:[]))
-  -- --return . Vec.filter (not . IntSet.null . _tasks) .
-  -- --  Vec.fromList . concat $ Vec.toList hss
-  --     (hs1, hs2) = probSelect prob hs -- randomPartition prob hs
-  -- hss <- Vec.mapM (_splitMutate o) hs1
-  -- return . (Vec.++) hs2 . Vec.fromList . concat $ Vec.toList hss
 
 mutateInTypes::(RandomGen g)=>Problem->Vec.Vector Host->Rand g (Vec.Vector Host)
 mutateInTypes p hs = do

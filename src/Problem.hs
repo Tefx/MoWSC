@@ -7,11 +7,13 @@ module Problem ( Time, Data
                , Problem (..), preds, succs, inp, ins, comm, refTime, nTask,
                  cu, bw, nIns, nType, charge, insPrice, qcharge, insPricePerCU
                , calObjs, showObjs
-               , Schedule (..), fromPool) where
+               , Schedule (..), fromPool, type2ins, toPool) where
 
 import           Control.Monad       (forM_)
 import           Control.Monad.ST    (ST, runST)
+import           Data.Function       (on)
 import           Data.Functor        ((<$>))
+import           Data.List           (groupBy, sortBy)
 import qualified Data.Map            as Map
 import qualified Data.Set            as Set
 import           Data.Vector         (Vector, (!))
@@ -188,3 +190,20 @@ fromPool order locs =
       _t2i = Vec.map ((Map.!) index) $ locs
       _i2t = map (flip quot $ length order) _inss
   in Schedule order _t2i (Vec.fromList _i2t)
+
+type2ins::Vec.Vector InsType->Int->Map.Map Ins Ins
+type2ins ts n = Map.unions .
+                map (assIns ts n) .
+                groupBy ((==) `on` (ts!)) .
+                sortBy (compare `on` (ts!)) $
+                [0..Vec.length ts-1]
+
+assIns::Vec.Vector InsType->Int->[Ins]->Map.Map Ins Ins
+assIns ts n is = Map.fromList $
+                 zipWith (\x y->(x, t*n+y)) is [0..]
+  where t = ts ! head is
+
+toPool::Problem->Schedule->(Orders, Vec.Vector Int)
+toPool p (Schedule _o _t2i _i2t) = (_o, s)
+    where m = type2ins _i2t $ nTask p
+          s = flip Vec.map _t2i $ (Map.!) m

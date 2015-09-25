@@ -1,0 +1,8 @@
+*.marks
+/cmake.check_cache
+/CMakeDirectoryInformation.cmake
+/CMakeOutput.log
+/Makefile.cmake
+/Makefile2
+/TargetDirectories.txt
+/CMakeFiles

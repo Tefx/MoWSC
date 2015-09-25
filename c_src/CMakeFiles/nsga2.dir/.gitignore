@@ -1,0 +1,5 @@
+*.make
+*.cmake
+/depend.internal
+/link.txt
+/C.includecache

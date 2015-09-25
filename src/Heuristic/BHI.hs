@@ -7,8 +7,15 @@ import           Problem     (Cost, Ins, Problem, Schedule, Time, cu, nTask,
 import           Data.List   (minimumBy)
 import           Data.Ord    (comparing)
 import qualified Data.Vector as Vec
+import Control.DeepSeq (NFData (..))
 
 data WeightType = Liner | Exp | Exp2 | Rnd
+
+instance NFData WeightType
+
+instance (NFData pl)=>NFData (CPartial pl) where
+  rnf (CPar a b c d e f g h) =
+    rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e `seq` rnf f `seq` rnf g `seq` rnf h
 
 data CPartial pl = CPar { _pool        :: pl
                         , _wtype       :: WeightType

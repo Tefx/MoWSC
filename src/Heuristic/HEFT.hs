@@ -7,7 +7,7 @@ import Data.Vector (Vector, (//))
 import qualified Data.Vector as Vec
 import Data.List (sortBy)
 import Data.Ord (comparing)
-
+import Control.DeepSeq (NFData (..))
 
 data CPartial pl = CPar { _pool::pl --Pool
                           -- State information
@@ -15,6 +15,10 @@ data CPartial pl = CPar { _pool::pl --Pool
                         , _lastC::Double
                         , _finishTimes::Vector Time
                         , _locations::Vector Ins}
+
+instance (NFData pl)=>NFData (CPartial pl) where
+  rnf (CPar a b c d e) =
+    rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e
 
 instance PartialSchedule CPartial where
   locations = _locations

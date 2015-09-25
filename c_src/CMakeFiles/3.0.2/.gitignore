@@ -1,0 +1,5 @@
+/CMakeDetermineCompilerABI_C.bin
+/CMakeDetermineCompilerABI_CXX.bin
+/CMakeSystem.cmake
+/CMakeCCompiler.cmake
+/CMakeCXXCompiler.cmake

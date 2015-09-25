@@ -3,7 +3,8 @@
 
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
-          , normalBreeder, abcBreeder, normalBreederF
+          , normalBreeder, abcBreeder, normalBreederF, psoBreeder
+          , psoESel, psoMSel
           , envSelectN
           , EAToolbox (..)
           , EASetup (..)
@@ -15,7 +16,7 @@ module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
 
 import           Control.DeepSeq      (NFData, deepseq, force)
 import           Control.Monad        (join, liftM, replicateM)
-import           Control.Monad.Random (Rand, RandomGen)
+import           Control.Monad.Random (Rand, RandomGen, getRandomR)
 import           Data.Function        (on)
 import           Data.Functor         ((<$>))
 import           Data.List            (transpose)
@@ -67,9 +68,14 @@ class (NFData a)=>Chromosome a where
   decode::Problem->a->Schedule
   encode::Problem->Schedule->a
 
+  farewell::Individual o a->Individual o a->Individual o a
+  avatar::a->a
+
   mutate _ _ = return
   crossover _ _ = return
   repMode _ = (2, 1)
+  farewell _ a = a
+  avatar a = a
 
 class (NFData a)=>ExtraEAInfo a where
   empty::EASetup->a
@@ -108,7 +114,6 @@ evalEA p c e = do p0 <- attach (empty c) . cBulkEval p .
 evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
         Problem->EASetup->EAToolbox->
         With i (Population o c)->Int->Rand g (With i (Population o c))
-
 evolve p c (EAToolbox _ _mSel _eSel _br) wp cur =
   do let pop = original wp
      pop' <- _eSel pop <$> _br p c cur _mSel pop
@@ -130,6 +135,25 @@ abcBreeder p c cur mSel is =
      return $ (Vec.++) is0 is1
   where pg = (fromIntegral cur /) . fromIntegral $ numGen c
         rep = liftM (cEval p) .  mutate p pg . chrm
+
+psoMSel::MutSelector
+psoMSel pop n = let f i = not $ Vec.any ((<<< getObjs i). getObjs) pop
+                    npop = Vec.filter f pop
+                    select = (npop Vec.!) <$> getRandomR (0, Vec.length npop-1)
+                in replicateM n select
+
+psoESel::EnvSelector
+psoESel _ p = p
+
+psoBreeder::EnvSelector->Breeder
+psoBreeder eSel p c cur mSel is =
+  do s <- mSel is (sizePop c)
+     npos <- cBulkEval p . Vec.fromList . concat <$>
+             (mapM (reproduce p c pg) . zipWith (\x y->[x, y]) s $ Vec.toList is)
+     let pbests = cBulkEval p . Vec.map (avatar . chrm) $ is
+         npp = eSel pbests npos
+     return $ Vec.zipWith farewell npos npp
+  where pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
 normalBreederF::Breeder
 normalBreederF p c cur mSel is =

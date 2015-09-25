@@ -7,6 +7,7 @@ import           Problem     (Cost, Ins, Problem, Schedule, Task, Time, cu,
 import           Data.List   (minimumBy)
 import           Data.Ord    (comparing)
 import qualified Data.Vector as Vec
+import Control.DeepSeq (NFData (..))
 
 data CPartial pl = CPar { _pool         :: pl
                         , _locations    :: Vec.Vector Ins
@@ -17,6 +18,10 @@ data CPartial pl = CPar { _pool         :: pl
                         , _currentTask  :: Task
                         , _currentCost  :: Cost
                         , _currentTime  :: Time}
+
+instance (NFData pl)=>NFData (CPartial pl) where
+  rnf (CPar a b c d e f g h i) =
+    rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e `seq` rnf f `seq` rnf g `seq` rnf h `seq` rnf i
 
 instance PartialSchedule CPartial where
   locations = _locations

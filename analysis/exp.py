@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 from config import exp_cmd, arg_tags, args_defaults, exp_defaults, experiments
-from config import dag_pegasus, dag_pegasus_path
+#from config import dag_pegasus, dag_pegasus_path
 from config import db_addr, db_name
 import pegasus
 

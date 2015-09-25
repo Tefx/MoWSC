@@ -7,14 +7,11 @@ import           Problem
 
 import           Control.DeepSeq       (NFData (..))
 import           Control.Monad.Random  (getRandomR)
-import           Data.Function         (on)
-import           Data.List             (groupBy, sortBy)
-import qualified Data.Map              as Map
-import           Data.Vector           (Vector, (!), (//))
+import           Data.Vector           ((!), (//))
 import qualified Data.Vector           as Vec
 
 data C0 = C0 { _order :: Orders
-             , _str   :: Vector Int}
+             , _str   :: Vec.Vector Int}
 
 instance NFData C0 where
   rnf (C0 _o _s) = rnf _o `seq` rnf _s
@@ -33,20 +30,7 @@ instance Chromosome C0 where
     [o0, o1] <- crossoverOrder p (_order i0) (_order i1)
     return $ [C0 o0 s0, C0 o1 s1]
 
-  encode p (Schedule _o _t2i _i2t) = C0 _o s
-    where m = type2ins _i2t $ nTask p
-          s = flip Vec.map _t2i $ (Map.!) m
+  encode p s = C0 o str
+    where (o, str) = toPool p s
 
-  decode _p i = fromPool (_order i) (_str i)
-
-type2ins::Vector InsType->Int->Map.Map Ins Ins
-type2ins ts n = Map.unions .
-                map (assIns ts n) .
-                groupBy ((==) `on` (ts!)) .
-                sortBy (compare `on` (ts!)) $
-                [0..Vec.length ts-1]
-
-assIns::Vector InsType->Int->[Ins]->Map.Map Ins Ins
-assIns ts n is = Map.fromList $
-                 zipWith (\x y->(x, t*n+y)) is [0..]
-  where t = ts ! head is
+  decode _ i = fromPool (_order i) (_str i)

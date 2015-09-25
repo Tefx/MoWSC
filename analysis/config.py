@@ -8,34 +8,23 @@ arg_tags = {
 }
 
 args_defaults = {
-    "pop_size" : 5,
-    "gen_num" : 1000,
+    "pop_size" : 10,
+    "gen_num" : 300,
     "prob_xo" : 1,
     "prob_mu" : 1,
 }
 
 exp_defaults = {
-    "times" : 4,
+    "times" : 1,
     "args" : {}
 }
 
 experiments = {
-    # "SPEA2-C0":{"cmd":"spea2_c0",},
-    # "SPEA2-C3":{"cmd":"spea2_c3",},
-    # "SPEA2-C5":{"cmd":"spea2_c5",},
-    # "NSGA2-C3":{"cmd":"nsga2_c3"},
+    # "SPEA2*":{"cmd":"spea2_c0",},
+    "SPEA2-C3":{"cmd":"spea2_c3",},
+    # "MOABC":{"cmd":"moabc"},
+    "NSPSO":{"cmd":"nspso"},
     # "MOHEFT":{"times":1,"cmd":"moheft"},
-    "LOSS2":{"times":1,"cmd":"loss2"},
-    # "LOSS3":{"times":1,"cmd":"loss3"},
-    "BHEFT":{"times":1,"cmd":"bheft"},
-    "HBCS":{"times":1,"cmd":"hbcs"},
-    # # "EBCS":{"times":1,"cmd":"ebcs"},
-    # # "LBCS":{"times":1,"cmd":"lbcs"},
-    "BHI/L":{"times":1,"cmd":"bhil"},
-    "BHI/E":{"times":1,"cmd":"bhie"},
-    "BHI/E2":{"times":1,"cmd":"bhie2"},
-    # "BHI/R":{"times":1,"cmd":"bhir"},
-    # "MBCS":{"times":1,"cmd":"mbcs"},
 }
 
 ## DAG
@@ -149,24 +138,12 @@ db_name = "hookie-exp-test"
 
 query_cond = {
     "algorithm" : [
-        "SPEA2-C0",
+        "SPEA2*",
         "SPEA2-C3",
-        "NSGA2-C3",
-        "SPEA2-C5",
-        "LOSS2",
-        "BHEFT",
-        "HBCS",
-        # "EBCS",
-        # "LBCS",
-        "BHI/L",
-        "BHI/E",
-        # "BHI/E2",
-        # "BHI/R",
-        # "MOHEFT",
-
-        "SPEA2-C3_c4",
+        "MOHEFT",
+        "MOABC",
+        "NSPSO"
     ],
-    "pop_size" : [5],
 }
 
 ## Hypervolume

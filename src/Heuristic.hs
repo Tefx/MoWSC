@@ -12,6 +12,8 @@ import Data.Set (member, insert)
 import qualified Data.Set as Set
 import qualified Data.IntMap as IM
 import Data.IntMap (IntMap)
+import Control.DeepSeq (NFData (..), deepseq)
+import Data.Foldable (foldr')
 
 class PartialSchedule ps where
   locations::ps pl->Vector Ins
@@ -26,15 +28,14 @@ class PartialSchedule ps where
   next::Pool pl=>Problem->Task->ps pl->[ps pl]
   next p t s = map (putTask p s t) . availIns . pool $ s
 
-  schedule::Pool pl=>Problem->
+  schedule::(NFData (ps pl))=>Pool pl=>Problem->
             Int->ps pl->[Schedule]
   schedule p k s0 = map (tidySchedule p pl o . Vec.toList . locations) .
-                    foldr f [s0] $ reverse o
+                    foldr' f [s0] $ reverse o
     where o = getOrder p
           pl = pool s0
           f t ss = let ss' = sortSchedule p $ ss >>= next p t
-                   in if length ss' <= k then ss'
-                      else take k ss'
+                   in ss' `deepseq` if length ss' <= k then ss' else take k ss'
 
 -- Pool class manages an available instance pool --
 
@@ -68,12 +69,15 @@ class Pool a where
   newCost p pl i st ft = charge p $ Account [(insType pl i, st, ft)]
 
 
-data InfinityPool = IPool { _ins::Set.Set Ins
-                          , _n::Int
-                          , _limit::Int
-                          , _startTime::Map.Map Ins Time
-                          , _availTime::Map.Map Ins Time
-                          , _costs::Map.Map Ins Cost}
+data InfinityPool = IPool { _ins :: Set.Set Ins
+                          , _n :: Int
+                          , _limit :: Int
+                          , _startTime :: Map.Map Ins Time
+                          , _availTime :: Map.Map Ins Time
+                          , _costs :: Map.Map Ins Cost}
+
+instance NFData InfinityPool where
+  rnf (IPool a b c d e f) = rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e `seq` rnf f
 
 instance Pool InfinityPool where
   insType pl i = i `mod` _n pl
@@ -112,12 +116,15 @@ _updateCost::Problem->InfinityPool->
              Ins->Time->Time->Map.Map Ins Cost
 _updateCost p pl i st ft = Map.insert i (newCost p pl i st ft) $ _costs pl
 
-data FullPool = FPool { _nType::Int
-                      , _nTask::Int
-                      , _used::Set.Set Ins
-                      , _start::IntMap Double
-                      , _avail::IntMap Double
-                      , _fcosts::IntMap Double}
+data FullPool = FPool { _nType :: Int
+                      , _nTask :: Int
+                      , _used :: Set.Set Ins
+                      , _start :: IntMap Double
+                      , _avail :: IntMap Double
+                      , _fcosts :: IntMap Double}
+
+instance NFData FullPool where
+  rnf (FPool a b c d e f) = rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e `seq` rnf f
 
 instance Pool FullPool where
   insType pl i = i `mod` _nType pl

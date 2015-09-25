@@ -2,28 +2,28 @@ WORKFLOWS = [
 	# Standard"dag with default parameters
 	{"dag":"Montage_25"			,"task_number":"default", "path":"", "app":"Montage"},
 	{"dag":"Montage_50"			,"task_number":"default", "path":"", "app":"Montage"},
-	{"dag":"Montage_100"		,"task_number":"default", "path":"", "app":"Montage"},
-	{"dag":"Montage_1000"		,"task_number":"default", "path":"", "app":"Montage"},
+	# {"dag":"Montage_100"		,"task_number":"default", "path":"", "app":"Montage"},
+	# {"dag":"Montage_1000"		,"task_number":"default", "path":"", "app":"Montage"},
 
 	{"dag":"Epigenomics_24"		,"task_number":"default", "path":"", "app":"Epigenomics"},
 	{"dag":"Epigenomics_46"		,"task_number":"default", "path":"", "app":"Epigenomics"},
-	{"dag":"Epigenomics_100"	,"task_number":"default", "path":"", "app":"Epigenomics"},
-	{"dag":"Epigenomics_997"	,"task_number":"default", "path":"", "app":"Epigenomics"},
+	# {"dag":"Epigenomics_100"	,"task_number":"default", "path":"", "app":"Epigenomics"},
+	# {"dag":"Epigenomics_997"	,"task_number":"default", "path":"", "app":"Epigenomics"},
 
 	{"dag":"CyberShake_30"		,"task_number":"default", "path":"", "app":"CyberShake"},
 	{"dag":"CyberShake_50"		,"task_number":"default", "path":"", "app":"CyberShake"},
-	{"dag":"CyberShake_100"		,"task_number":"default", "path":"", "app":"CyberShake"},
-	{"dag":"CyberShake_1000"	,"task_number":"default", "path":"", "app":"CyberShake"},
+	# {"dag":"CyberShake_100"		,"task_number":"default", "path":"", "app":"CyberShake"},
+	# {"dag":"CyberShake_1000"	,"task_number":"default", "path":"", "app":"CyberShake"},
 
 	{"dag":"Sipht_30"			,"task_number":"default", "path":"", "app":"SIPHT"},
 	{"dag":"Sipht_60"			,"task_number":"default", "path":"", "app":"SIPHT"},
-	{"dag":"Sipht_100"			,"task_number":"default", "path":"", "app":"SIPHT"},
-	{"dag":"Sipht_1000"			,"task_number":"default", "path":"", "app":"SIPHT"},
+	# {"dag":"Sipht_100"			,"task_number":"default", "path":"", "app":"SIPHT"},
+	# {"dag":"Sipht_1000"			,"task_number":"default", "path":"", "app":"SIPHT"},
 
 	{"dag":"Inspiral_30"		,"task_number":"default", "path":"", "app":"LIGO"},
 	{"dag":"Inspiral_50"		,"task_number":"default", "path":"", "app":"LIGO"},
-	{"dag":"Inspiral_100"		,"task_number":"default", "path":"", "app":"LIGO"},
-	{"dag":"Inspiral_1000"		,"task_number":"default", "path":"", "app":"LIGO"},
+	# {"dag":"Inspiral_100"		,"task_number":"default", "path":"", "app":"LIGO"},
+	# {"dag":"Inspiral_1000"		,"task_number":"default", "path":"", "app":"LIGO"},
 
 
 	# By numbers of tasks	
