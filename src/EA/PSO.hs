@@ -50,29 +50,26 @@ pos4i m v i = Vec.maxIndex $ Vec.slice (i*m) m v
 nextPosition::Int->Int->Velocity->Position
 nextPosition n m v =  Vec.generate n $ pos4i m v
 
-data Particle = Particle { curPos   :: Position
-                         , pbestPos :: Position
+data Particle = Particle { pos   :: Position
                          , vel      :: Velocity
                          , _order   :: Orders}
 
 instance NFData Particle where
-  rnf (Particle a b c o) = rnf a `seq` rnf b `seq` rnf c `seq` rnf o
+  rnf (Particle a b c) = rnf a `seq` rnf b `seq` rnf c
 
 instance Chromosome Particle where
-  repMode _ = (2, 1)
+  repMode _ = (3, 1)
 
-  crossover p c [Particle gP _ _ _, Particle cP pP vel o] =
+  crossover p c [Particle gP _ _, Particle pP _ _, Particle cP vel o] =
     do vel' <- updateVel c m gP pP cP vel
        let pos' = nextPosition n m vel'
-       return $ [Particle pos' pP vel' o]
-    where n = Vec.length cP
-          m = Vec.length vel `quot` Vec.length cP
+       return $ [Particle pos' vel' o]
+    where n = nTask p
+          m = nTask p * nType p
 
-  encode p s = Particle str str (Vec.replicate num 0) o
-    where (o, str) = toPool p s
-          num = nTask p * nTask p * nType p
+  encode p s = do let (o, str) = toPool p s
+                      num = nTask p * nTask p * nType p
+                  vel <- Vec.replicateM num $ getRandomR (0, 1)
+                  return $ Particle str vel o
 
-  decode _ i = fromPool (_order i) (curPos i)
-
-  farewell i0 i1 = i0 {chrm=(chrm i0){pbestPos=curPos $ chrm i1}}
-  avatar p = p {curPos = pbestPos p}
+  decode _ i = fromPool (_order i) (pos i)

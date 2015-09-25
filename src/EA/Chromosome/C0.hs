@@ -30,7 +30,7 @@ instance Chromosome C0 where
     [o0, o1] <- crossoverOrder p (_order i0) (_order i1)
     return $ [C0 o0 s0, C0 o1 s1]
 
-  encode p s = C0 o str
+  encode p s = return $ C0 o str
     where (o, str) = toPool p s
 
   decode _ i = fromPool (_order i) (_str i)

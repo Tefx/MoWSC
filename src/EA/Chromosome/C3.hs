@@ -69,7 +69,7 @@ instance Chromosome C3 where
 
   encode p (Schedule o t2i i2t) =
     let _insert t is = let i = t2i ! t in is // [(i, insertTask t $ is!i)]
-    in C3 o . Vec.filter (not . IntSet.null . _tasks) $
+    in return . C3 o . Vec.filter (not . IntSet.null . _tasks) $
        foldr _insert (Vec.map (flip Host IntSet.empty) i2t) [0..nTask p-1]
 
   decode p (C3 o hs) = Schedule o (calt2i p hs) (Vec.map _type hs)

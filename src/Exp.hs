@@ -55,7 +55,8 @@ import           EA                            (Chromosome, EASetup (..),
                                                 NullInfo (..), PopInitialiser,
                                                 Population, abcBreeder, evalEA,
                                                 normalBreeder, normalBreederF,
-                                                psoBreeder, psoESel, psoMSel)
+                                                psoBreeder, psoESel, psoMSel,
+                                                psoInitialiserMaker)
 import           EA.Chromosome
 import qualified EA.Foreign                    as EF
 import           EA.Init
@@ -205,7 +206,7 @@ abc i p c = evalEA p c' $ EAToolbox { popInit = i
   where c' = c{numGen=numGen c `quot` 2}
 
 pso::(Objectives o)=>PopInitialiser->ExpType o Particle
-pso i p c = evalEA p c $ EAToolbox { popInit = i
+pso i p c = evalEA p c $ EAToolbox { popInit = psoInitialiserMaker i
                                    , mutSel = psoMSel
                                    , envSel = psoESel
                                    , breeder = psoBreeder EF.nsga2Select}

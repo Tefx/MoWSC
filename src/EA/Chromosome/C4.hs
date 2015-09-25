@@ -53,7 +53,7 @@ instance Chromosome C4 where
   encode p (Schedule o t2i i2t) =
     let _updT t hs = let i = t2i!t
                      in hs // [(i, insertTask t $ hs!i)]
-    in C4 o . filterUsed $
+    in return . C4 o . filterUsed $
        foldr _updT (Vec.map (flip Host []) i2t) [0..nTask p-1]
 
   decode p (C4 o hs) =

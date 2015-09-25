@@ -38,7 +38,7 @@ instance Chromosome C2 where
     o' <- mutateOrder p $ _order i
     return $ C2 o' is'
 
-  encode p (Schedule _o _t2i _i2t) = C2 _o is
+  encode p (Schedule _o _t2i _i2t) = return $ C2 _o is
     where is = foldr (_insertTask _t2i)
                (Vec.map (flip IHost Set.empty) _i2t)
                [0..nTask p - 1]

@@ -72,7 +72,7 @@ instance Chromosome C5 where
   encode p (Schedule o t2i i2t) =
     let hs = Vec.map (Host []) i2t
         hs' = foldr (insertTask t2i) hs o
-    in C5 (orders2Locs o) hs'
+    in return $ C5 (orders2Locs o) hs'
 
   decode p (C5 locs hs) =
     Schedule (locs2Orders locs) (calt2i p hs) (Vec.map _type hs)

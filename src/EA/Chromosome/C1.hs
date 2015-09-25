@@ -36,7 +36,7 @@ instance Chromosome C1 where
     ins2type' <- fastMutate (nIns p - 1) (nType p - 1) $ _ins2type i
     return $ C1 order' task2ins' ins2type'
 
-  encode p (Schedule o t2i i2t) = C1 o t2i . (Vec.++) i2t $
+  encode p (Schedule o t2i i2t) = return . C1 o t2i . (Vec.++) i2t $
                                   Vec.replicate (nIns p - Vec.length i2t) 0
 
   decode _ (C1 _o _t2i _i2t) =

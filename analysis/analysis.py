@@ -69,7 +69,7 @@ def evolve_history(dag, key, hv_only=True):
 			t[k] = best
 	return t
 
-def beDom(x, y):
+def dominate(x, y):
 	if x[0] < y[0]:
 		return x[1] <= y[1]
 	elif x[0] == y[0]:
@@ -78,7 +78,7 @@ def beDom(x, y):
 		return False
 
 def nonDom(x, xs):
-	return not any([beDom(x, y) for y in xs])
+	return not any([dominate(y, x) for y in xs])
 
 def pareto_filter(xs):
 	return [x for x in xs if nonDom(x, xs)]

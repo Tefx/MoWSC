@@ -3,8 +3,8 @@
 
 
 module EA ( Population, EnvSelector, MutSelector, Breeder, PopInitialiser
-          , normalBreeder, abcBreeder, normalBreederF, psoBreeder
-          , psoESel, psoMSel
+          , normalBreeder, abcBreeder, normalBreederF
+          , psoBreeder, psoESel, psoMSel, psoInitialiserMaker
           , envSelectN
           , EAToolbox (..)
           , EASetup (..)
@@ -66,7 +66,7 @@ class (NFData a)=>Chromosome a where
   mutate::(RandomGen g)=>Problem->Double->a->Rand g a
 
   decode::Problem->a->Schedule
-  encode::Problem->Schedule->a
+  encode::(RandomGen g)=>Problem->Schedule->Rand g a
 
   farewell::Individual o a->Individual o a->Individual o a
   avatar::a->a
@@ -99,7 +99,8 @@ instance NFData EATrace where
 instance ExtraEAInfo EATrace where
   empty c = EATrace . Vec.replicate 50 $ Vec.singleton []
   update p c pop cur i@(EATrace trc)
-    | cur `rem` step == 0 = let objs = Vec.map (toList . getObjs) pop
+    | cur `rem` step == 0 = let objs = Vec.map (toList . getObjs) $
+                                       Vec.unsafeTake (sizePop c) pop
                             in EATrace $ trc // [(cur `quot` step, objs)]
     | otherwise = i
     where step = let k = numGen c `quot` 50
@@ -107,9 +108,11 @@ instance ExtraEAInfo EATrace where
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))
-evalEA p c e = do p0 <- attach (empty c) . cBulkEval p .
-                        Vec.map (encode p) <$> (popInit e) p (sizePop c)
-                  foldM' (evolve p c e) (force p0) [0..numGen c-1]
+evalEA p c e = do cs0 <- (popInit e) p (sizePop c)
+                  pop0 <- Vec.mapM (encode p) cs0
+                  let p0 = attach (empty c) . cBulkEval p $ pop0
+                  With a b <- foldM' (evolve p c e) (force p0) [0..numGen c-1]
+                  return . With a $ Vec.take (sizePop c) b
 
 evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
         Problem->EASetup->EAToolbox->
@@ -137,8 +140,9 @@ abcBreeder p c cur mSel is =
         rep = liftM (cEval p) .  mutate p pg . chrm
 
 psoMSel::MutSelector
-psoMSel pop n = let f i = not $ Vec.any ((<<< getObjs i). getObjs) pop
-                    npop = Vec.filter f pop
+psoMSel pop n = let pop' = Vec.unsafeDrop n pop
+                    f i = not $ Vec.any ((<<< getObjs i). getObjs) pop'
+                    npop = Vec.filter f pop'
                     select = (npop Vec.!) <$> getRandomR (0, Vec.length npop-1)
                 in replicateM n select
 
@@ -146,14 +150,19 @@ psoESel::EnvSelector
 psoESel _ p = p
 
 psoBreeder::EnvSelector->Breeder
-psoBreeder eSel p c cur mSel is =
-  do s <- mSel is (sizePop c)
-     npos <- cBulkEval p . Vec.fromList . concat <$>
-             (mapM (reproduce p c pg) . zipWith (\x y->[x, y]) s $ Vec.toList is)
-     let pbests = cBulkEval p . Vec.map (avatar . chrm) $ is
-         npp = eSel pbests npos
-     return $ Vec.zipWith farewell npos npp
+psoBreeder eSel p c cur _ is =
+  do gPs <- psoMSel is (sizePop c)
+     let cPs = Vec.toList $ Vec.unsafeTake (sizePop c) is
+         pPs = Vec.unsafeDrop (sizePop c) is
+     newPs <- cBulkEval p .Vec.fromList .concat <$>
+              (mapM (reproduce p c pg) $
+               zipWith3 (\x y z->[x, y, z]) gPs (Vec.toList pPs) cPs)
+     return $ newPs Vec.++ eSel newPs pPs
   where pg = (fromIntegral cur /) . fromIntegral $ numGen c
+
+psoInitialiserMaker::PopInitialiser->PopInitialiser
+psoInitialiserMaker init p n = do pop <- init p n
+                                  return $ pop Vec.++ pop
 
 normalBreederF::Breeder
 normalBreederF p c cur mSel is =

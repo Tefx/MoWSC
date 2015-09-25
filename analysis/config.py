@@ -8,23 +8,23 @@ arg_tags = {
 }
 
 args_defaults = {
-    "pop_size" : 10,
-    "gen_num" : 300,
+    "pop_size" : 15,
+    "gen_num" : 10000,
     "prob_xo" : 1,
     "prob_mu" : 1,
 }
 
 exp_defaults = {
-    "times" : 1,
+    "times" : 10,
     "args" : {}
 }
 
 experiments = {
-    # "SPEA2*":{"cmd":"spea2_c0",},
+    "SPEA2*":{"cmd":"spea2_c0",},
     "SPEA2-C3":{"cmd":"spea2_c3",},
-    # "MOABC":{"cmd":"moabc"},
+    "MOABC":{"cmd":"moabc"},
     "NSPSO":{"cmd":"nspso"},
-    # "MOHEFT":{"times":1,"cmd":"moheft"},
+    "MOHEFT":{"times":1,"cmd":"moheft"},
 }
 
 ## DAG
