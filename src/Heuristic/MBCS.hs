@@ -5,10 +5,10 @@ import           Problem         (Cost, Ins, Problem, Schedule, Time, cu, nTask,
                                   nType, qcharge, refTime)
 import           Problem.Foreign (computeObjs)
 
+import           Control.DeepSeq (NFData (..))
 import           Data.List       (minimumBy)
 import           Data.Ord        (comparing)
 import qualified Data.Vector     as Vec
-import Control.DeepSeq (NFData (..))
 
 data CPartial pl = CPar { _pool         :: pl
                         , _locations    :: Vec.Vector Ins
@@ -38,8 +38,8 @@ instance PartialSchedule CPartial where
                       , _lastFT = ft
                       , _lastC = c
                       , _finishTimes = _finishTimes s Vec.// [(t, ft)]}
-    where (_, ft, pl, pl') = allocIns p s t i
-          c = cost pl' i - cost pl i
+    where (_, ft, pl') = allocIns p s t i
+          c = cost pl' i - cost (_pool s) i
 
   sortSchedule p ss =
     let _update s = s {_remainBudget = _remainBudget s - _lastC s}

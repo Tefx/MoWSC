@@ -14,6 +14,7 @@ import qualified Data.IntMap as IM
 import Data.IntMap (IntMap)
 import Control.DeepSeq (NFData (..), deepseq)
 import Data.Foldable (foldr')
+import GHC.Float
 
 class PartialSchedule ps where
   locations::ps pl->Vector Ins
@@ -34,8 +35,10 @@ class PartialSchedule ps where
                     foldr' f [s0] $ reverse o
     where o = getOrder p
           pl = pool s0
-          f t ss = let ss' = sortSchedule p $ ss >>= next p t
-                   in ss' `deepseq` if length ss' <= k then ss' else take k ss'
+          f t ss = let ss' = ss >>= next p t
+                   in ss' `deepseq` if length ss' <= k
+                                    then ss'
+                                    else take k $ sortSchedule p ss'
 
 -- Pool class manages an available instance pool --
 
@@ -52,7 +55,7 @@ class Pool a where
   totalCost pl = sum . map (cost pl) $ availIns pl
 
   allocIns::(PartialSchedule pl)=>Problem->
-            pl a->Task->Ins->(Time, Time, a, a)
+            pl a->Task->Ins->(Time, Time, a)
 
   scheduleTask::(PartialSchedule pl)=>Problem->
                 pl a->Task->Ins->(Time, Time)
@@ -92,16 +95,17 @@ instance Pool InfinityPool where
     where used = _ins pl
           n = _n pl
 
-  allocIns p s t i = (st, ft, pl, pl')
+  allocIns p s t i = (st
+                     , ft
+                     , if member i $ _ins pl
+                       then pl { _availTime = Map.insert i ft $ _availTime pl
+                               , _costs = _updateCost p pl i (startTime pl i) ft}
+                       else pl { _ins = i `insert` _ins pl
+                               , _startTime = Map.insert i st $ _startTime pl
+                               , _availTime = Map.insert i ft $ _availTime pl
+                               , _costs = _updateCost p pl i st ft})
     where (st, ft) = scheduleTask p s t i
           pl = pool s
-          pl' = if i `member` _ins pl
-                then pl { _availTime = Map.insert i ft $ _availTime pl
-                        , _costs = _updateCost p pl i (startTime pl i) ft}
-                else pl { _ins = i `insert` _ins pl
-                        , _startTime = Map.insert i st $ _startTime pl
-                        , _availTime = Map.insert i ft $ _availTime pl
-                        , _costs = _updateCost p pl i st ft}
 
 
   prepare p = IPool Set.empty (nType p) (nIns p) Map.empty Map.empty Map.empty
@@ -119,9 +123,9 @@ _updateCost p pl i st ft = Map.insert i (newCost p pl i st ft) $ _costs pl
 data FullPool = FPool { _nType :: Int
                       , _nTask :: Int
                       , _used :: Set.Set Ins
-                      , _start :: IntMap Double
-                      , _avail :: IntMap Double
-                      , _fcosts :: IntMap Double}
+                      , _start :: IntMap Float
+                      , _avail :: IntMap Float
+                      , _fcosts :: IntMap Float}
 
 instance NFData FullPool where
   rnf (FPool a b c d e f) = rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e `seq` rnf f
@@ -129,24 +133,26 @@ instance NFData FullPool where
 instance Pool FullPool where
   insType pl i = i `mod` _nType pl
   allUsed = Set.toList . _used
-  startTime pl i = (IM.!) (_start pl) i
-  availTime pl i = IM.findWithDefault 0 i $ _avail pl
-  cost pl i = IM.findWithDefault 0 i $ _fcosts pl
+  startTime pl i = float2Double $ (IM.!) (_start pl) i
+  availTime pl i = float2Double . IM.findWithDefault 0 i $ _avail pl
+  cost pl i = float2Double . IM.findWithDefault 0 i $ _fcosts pl
   availIns pl = [0.._nType pl * _nTask pl - 1]
   prepare p = FPool (nType p) (nTask p) Set.empty IM.empty IM.empty IM.empty
 
-  allocIns p s t i = (st, ft, pl, pl')
-    where (st, ft) = scheduleTask p s t i
-          pl = pool s
-          pl' = if i `member` _used pl
-                then let st' = startTime pl i
-                     in pl { _avail = IM.insert i ft $ _avail pl
-                           , _fcosts = IM.insert i (newCost p pl i st' ft) $
-                                  _fcosts pl}
-                else pl { _used = i `insert` _used pl
-                        , _start = IM.insert i st $ _start pl
-                        , _avail = IM.insert i ft $ _avail pl
-                        , _fcosts = IM.insert i (newCost p pl i st ft) $ _fcosts pl}
+  allocIns p s t i =
+    let (st, ft) = scheduleTask p s t i
+        pl = pool s
+    in (st, ft
+       , if i `member` _used pl
+         then let st' = startTime pl i
+              in pl { _avail = IM.insert i (double2Float ft) $ _avail pl
+                    , _fcosts = IM.insert i (double2Float $ newCost p pl i st' ft) $
+                                _fcosts pl}
+         else pl { _used = i `insert` _used pl
+                 , _start = IM.insert i (double2Float st) $ _start pl
+                 , _avail = IM.insert i (double2Float ft) $ _avail pl
+                 , _fcosts = IM.insert i (double2Float $ newCost p pl i st ft) $
+                             _fcosts pl})
 
 -- Some helper functions --
 

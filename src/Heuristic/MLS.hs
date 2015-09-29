@@ -1,13 +1,13 @@
 module Heuristic.MLS (mls) where
 
-import           Heuristic   (InfinityPool, PartialSchedule (..), Pool (..))
-import           Problem     (Ins, Problem, Schedule, Time, nTask)
+import           Heuristic       (InfinityPool, PartialSchedule (..), Pool (..))
+import           Problem         (Ins, Problem, Schedule, Time, nTask)
 
-import           Data.List   (minimumBy)
-import           Data.Ord    (comparing)
-import           Data.Vector ((//))
-import qualified Data.Vector as Vec
-import Control.DeepSeq (NFData (..))
+import           Control.DeepSeq (NFData (..))
+import           Data.List       (minimumBy)
+import           Data.Ord        (comparing)
+import           Data.Vector     ((//))
+import qualified Data.Vector     as Vec
 
 data CPartial pl = CPar { _pool        :: pl
                         , _r           :: [Double]
@@ -40,10 +40,10 @@ instance PartialSchedule CPartial where
 
   putTask p s t i = s { _pool = pl'
                       , _ct = if ft > _ct s then ft else _ct s
-                      , _cc = cost pl' i - cost pl i + _cc s
+                      , _cc = cost pl' i - cost (_pool s) i + _cc s
                       , _finishTimes = _finishTimes s // [(t, ft)]
                       , _locations = _locations s // [(t, i)]}
-    where (_, ft, pl, pl') = allocIns p s t i
+    where (_, ft, pl') = allocIns p s t i
 
 empty::Pool pl=>Problem->[Double]->CPartial pl
 empty p rs = CPar (prepare p) rs 0 0

@@ -22,12 +22,12 @@ data EC2 = EC2 { ecus       :: Vec.Vector CU
                , _n         :: Int}
 
 instance Service EC2 where
-  s_cu s = (ecus s !)
-  s_bw s t0 t1 = _cachedBW s ! (t0 * _n s + t1)
-  s_insPrice s = (prices s !)
+  s_cu s = Vec.unsafeIndex (ecus s)
+  s_bw s t0 t1 = Vec.unsafeIndex (_cachedBW s) (t0 * _n s + t1)
+  s_insPrice s = Vec.unsafeIndex (prices s)
   s_nType = Vec.length . ecus
   s_maxIns = insLimit
-  s_qcharge s (p, ts, te) = (prices s ! p) *  fromIntegral hs
+  s_qcharge s (p, ts, te) = (Vec.unsafeIndex (prices s) p) *  fromIntegral hs
     where hs = ceiling . (/3600) $ te - ts ::Int
 
   --s_qcharge s (p, ts, te) = (prices s ! p) / 60 * fromIntegral hs

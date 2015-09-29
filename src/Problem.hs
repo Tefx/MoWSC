@@ -76,49 +76,49 @@ class Service s where
 
 -- Problem related --
 
-data Problem = forall w s. (Workflow w, Service s)=>Prob w s
+data Problem = forall w s. (Workflow w, Service s)=>Prob w s Double
 
 preds::Problem->Task->[Task]
-preds (Prob w _) = w_preds w
+preds (Prob w _ _) = w_preds w
 
 succs::Problem->Task->[Task]
-succs (Prob w _) = w_succs w
+succs (Prob w _ _) = w_succs w
 
 inp::Problem->Task->Task->Bool
-inp (Prob w _) ti tj = w_hasEdge w ti tj
+inp (Prob w _ _) ti tj = w_hasEdge w ti tj
 
 ins::Problem->Task->Task->Bool
-ins (Prob w _) tj ti = w_hasEdge w ti tj
+ins (Prob w _ _) tj ti = w_hasEdge w ti tj
 
 comm::Problem->Task->Task->Data
-comm (Prob w _) = w_comm w
+comm (Prob w _ _) = w_comm w
 
 refTime::Problem->Task->Time
-refTime (Prob w _) = w_refTime w
+refTime (Prob w _ s) t = s * w_refTime w t
 
 nTask::Problem->Int
-nTask (Prob w _) = w_nTask w
+nTask (Prob w _ _) = w_nTask w
 
 cu::Problem->InsType->CU
-cu (Prob _ s) = s_cu s
+cu (Prob _ s _) = s_cu s
 
 bw::Problem->InsType->InsType->Bandwidth
-bw (Prob _ s) = s_bw s
+bw (Prob _ s _) = s_bw s
 
 nIns::Problem->Int
-nIns (Prob w s) = min (s_maxIns s) (w_nTask w)
+nIns (Prob w s _) = min (s_maxIns s) (w_nTask w)
 
 nType::Problem->Int
-nType (Prob _ s) = s_nType s
+nType (Prob _ s _) = s_nType s
 
 charge::Problem->Account->Cost
-charge (Prob _ s)= s_charge s
+charge (Prob _ s _)= s_charge s
 
 qcharge::Problem->(InsType, Time, Time)->Cost
-qcharge (Prob _ s) = s_qcharge s
+qcharge (Prob _ s _) = s_qcharge s
 
 insPrice::Problem->InsType->Cost
-insPrice (Prob _ s) = s_insPrice s
+insPrice (Prob _ s _) = s_insPrice s
 
 insPricePerCU::Problem->InsType->Cost
 insPricePerCU p t = insPrice p t / cu p t

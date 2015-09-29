@@ -55,8 +55,8 @@ import           EA                            (Chromosome, EASetup (..),
                                                 NullInfo (..), PopInitialiser,
                                                 Population, abcBreeder, evalEA,
                                                 normalBreeder, normalBreederF,
-                                                psoBreeder, psoESel, psoMSel,
-                                                psoInitialiserMaker)
+                                                psoBreeder, psoESel,
+                                                psoInitialiserMaker, psoMSel)
 import           EA.Chromosome
 import qualified EA.Foreign                    as EF
 import           EA.Init
@@ -85,8 +85,10 @@ import           Problem.Service.EC2           as EC2
 import           Utils                         (With, attached, original)
 
 import           Control.Monad.Random          (Rand, RandomGen, evalRand)
-import           Data.Aeson                    (ToJSON, encode)
+import           Data.Aeson                    (ToJSON, encode, toJSON)
 import qualified Data.ByteString.Lazy.Char8    as BL
+import qualified Data.Foldable                 as DF
+import qualified Data.Sequence                 as Seq
 import qualified Data.Vector                   as Vec
 import           GHC.Generics                  (Generic)
 import           Problem.Foreign               (computeObjs, finishProblem,
@@ -97,13 +99,15 @@ import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 typFile, (&=))
 import           System.Random.Mersenne.Pure64 (PureMT, newPureMT)
 
-data Exp = Exp { alg     :: String
-               , limit   :: Int
-               , popsize :: Int
-               , gen     :: Int
-               , pcr     :: Double
-               , pmu     :: Double
-               , file    :: [FilePath]} deriving (Data, Typeable, Show, Eq)
+data Exp = Exp { alg       :: String
+               , limit     :: Int
+               , popsize   :: Int
+               , gen       :: Int
+               , gen_scale :: Int
+               , pcr       :: Double
+               , pmu       :: Double
+               , rt_scale  :: Double
+               , file      :: [FilePath]} deriving (Data, Typeable, Show, Eq)
 
 ea::Exp
 ea = Exp { alg = "heft" &= argPos 0 &= typ "ALG"
@@ -113,10 +117,14 @@ ea = Exp { alg = "heft" &= argPos 0 &= typ "ALG"
                      &= help "Size of Population."
          , gen = 1000 &= name "g" &= typ "NUM"
                  &= help "Number of Generation."
+         , gen_scale = 0 &= name "s" &= typ "NUM"
+                       &= help "Gen scale to number of tasks"
          , pcr = 1 &= name "c" &= typ "NUM"
                  &= help "prob of Crossover."
          , pmu = 1 &= name "m" &= typ "NUM"
                  &= help "prob of Mutation."
+         , rt_scale = 1 &= name "r" &= typ "NUM"
+                      &= help "Running time scale"
          , file = def &= argPos 1 &= typFile
          } &= summary "Cloud Workflow Scheduling Experiment"
 
@@ -125,8 +133,9 @@ process args = do
   w <- DAG.fromFile . head $ file args
   s <- EC2.mkService $ limit args
   g <- newXorshift
-  let p = Prob w s
-      ec = EASetup { numGen = gen $ args
+  let p = Prob w s $ rt_scale args
+      ec = EASetup { numGen = if (gen_scale args == 0) then gen args
+                              else gen_scale args * nTask p
                    , sizePop = popsize $ args
                    , probCrs = pcr $ args
                    , probMut = pmu $ args}
@@ -151,7 +160,9 @@ process args = do
 
     "nsga2_c3" -> dumpRes . runEA g $ eaNSGA2_C3 p ec
     "spea2_c0" -> dumpRes . runEA g $ eaSPEA2_C0 p ec
-    "spea2_c3" -> dumpRes . runEA g $ eaSPEA2_C3 p ec
+    "spea2_c3_p" -> dumpRes . runEA g $ eaSPEA2_C3_P p ec
+    "spea2_c3_nh" -> dumpRes . runEA g $ eaSPEA2_C3_NH p ec
+    "spea2_c3_f" -> dumpRes . runEA g $ eaSPEA2_C3_F p ec
     "spea2_c5" -> dumpRes . runEA g $ eaSPEA2_C5 p ec
     "moabc" -> dumpRes . runEA g $ eaMOABC p ec
     "nspso" -> dumpRes . runEA g $ eaNSPSO p ec
@@ -174,6 +185,9 @@ instance ToJSON NullInfo
 
 deriving instance Generic EATrace
 deriving instance Show EATrace
+instance (ToJSON a)=>ToJSON (Seq.Seq a) where
+  toJSON = toJSON . DF.toList
+
 instance ToJSON EATrace
 
 type ExpType o c = (RandomGen g)=>
@@ -217,8 +231,14 @@ eaNSGA2_C3 = nsga2 randTypeSRH
 eaSPEA2_C0::ExpType MakespanCost C0
 eaSPEA2_C0 = spea2 randPoolOrHeft
 
-eaSPEA2_C3::ExpType MakespanCost C3
-eaSPEA2_C3 = spea2 randPoolOrHeft
+eaSPEA2_C3_P::ExpType MakespanCost C3
+eaSPEA2_C3_P = spea2 randPool
+
+eaSPEA2_C3_NH::ExpType MakespanCost C3
+eaSPEA2_C3_NH = spea2 randTypeSR
+
+eaSPEA2_C3_F::ExpType MakespanCost C3
+eaSPEA2_C3_F = spea2 randTypeSRH
 
 eaSPEA2_C5::ExpType MakespanCost C5
 eaSPEA2_C5 = spea2 randTypeSRH

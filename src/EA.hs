@@ -20,6 +20,7 @@ import           Control.Monad.Random (Rand, RandomGen, getRandomR)
 import           Data.Function        (on)
 import           Data.Functor         ((<$>))
 import           Data.List            (transpose)
+import qualified Data.Sequence        as Seq
 import           Data.Vector          ((//))
 import qualified Data.Vector          as Vec
 
@@ -91,20 +92,19 @@ instance NFData NullInfo where
 instance ExtraEAInfo NullInfo where
   empty _ = NullInfo
 
-newtype EATrace = EATrace {trace::Vec.Vector (Vec.Vector [ObjValue])}
+newtype EATrace = EATrace {trace::Seq.Seq (Vec.Vector [ObjValue])}
 
 instance NFData EATrace where
   rnf (EATrace t) = rnf t `seq` ()
 
 instance ExtraEAInfo EATrace where
-  empty c = EATrace . Vec.replicate 50 $ Vec.singleton []
+  empty c = EATrace $ Seq.empty
   update p c pop cur i@(EATrace trc)
     | cur `rem` step == 0 = let objs = Vec.map (toList . getObjs) $
                                        Vec.unsafeTake (sizePop c) pop
-                            in EATrace $ trc // [(cur `quot` step, objs)]
+                            in EATrace $ trc Seq.|> objs
     | otherwise = i
-    where step = let k = numGen c `quot` 50
-                 in if k == 0 then 1 else k
+    where step = 10
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))
@@ -112,7 +112,7 @@ evalEA p c e = do cs0 <- (popInit e) p (sizePop c)
                   pop0 <- Vec.mapM (encode p) cs0
                   let p0 = attach (empty c) . cBulkEval p $ pop0
                   With a b <- foldM' (evolve p c e) (force p0) [0..numGen c-1]
-                  return . With a $ Vec.take (sizePop c) b
+                  return . With a $ b
 
 evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
         Problem->EASetup->EAToolbox->
@@ -140,7 +140,7 @@ abcBreeder p c cur mSel is =
         rep = liftM (cEval p) .  mutate p pg . chrm
 
 psoMSel::MutSelector
-psoMSel pop n = let pop' = Vec.unsafeDrop n pop
+psoMSel pop n = let pop' = Vec.unsafeTake n pop
                     f i = not $ Vec.any ((<<< getObjs i). getObjs) pop'
                     npop = Vec.filter f pop'
                     select = (npop Vec.!) <$> getRandomR (0, Vec.length npop-1)
@@ -152,12 +152,12 @@ psoESel _ p = p
 psoBreeder::EnvSelector->Breeder
 psoBreeder eSel p c cur _ is =
   do gPs <- psoMSel is (sizePop c)
-     let cPs = Vec.toList $ Vec.unsafeTake (sizePop c) is
-         pPs = Vec.unsafeDrop (sizePop c) is
+     let cPs = Vec.toList $ Vec.unsafeDrop (sizePop c) is
+         pPs = Vec.unsafeTake (sizePop c) is
      newPs <- cBulkEval p .Vec.fromList .concat <$>
               (mapM (reproduce p c pg) $
                zipWith3 (\x y z->[x, y, z]) gPs (Vec.toList pPs) cPs)
-     return $ newPs Vec.++ eSel newPs pPs
+     return $ (eSel pPs newPs) Vec.++ newPs
   where pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
 psoInitialiserMaker::PopInitialiser->PopInitialiser

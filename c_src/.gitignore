@@ -2,4 +2,3 @@
 *.h.gch
 /cmake_install.cmake
 /Makefile
-/CMakeLists.txt

@@ -10,39 +10,42 @@ import           Control.DeepSeq      (NFData (..))
 import           Control.Monad        (replicateM)
 import           Control.Monad.Random (Rand, RandomGen, getRandomR)
 import           Data.Functor         ((<$>))
-import qualified Data.Vector          as Vec
+import qualified Data.Vector.Unboxed  as Vec
+import           GHC.Float
 
-import Debug.Trace
+import           Debug.Trace
 
 type Position = Vec.Vector Int
-type Velocity = Vec.Vector Double
+type Velocity = Vec.Vector Float
 
-item::Position->Int->Int->Double
-item p m i = if (p Vec.! x) == y then 1 else 0
-  where x = i `quot` m
-        y = i `rem` m
+item::Position->Int->Int->Float
+{-#INLINE item#-}
+item p m i = if (Vec.unsafeIndex p $ i `quot` m) == i `rem` m then 1 else 0
 
-getParameters::Double->(Double, Double, Double)
-getParameters c = (w_max - c * (w_max - w_min), c1, c2)
-  where w_max = 1.0
-        w_min = 0.4
-        c1 = 2
-        c2 = 2
+getParameters::Double->(Float, Float, Float)
+getParameters c = let w_max = 1.0
+                      w_min = 0.4
+                      c1 = 2
+                      c2 = 2
+                  in (w_max - double2Float c * (w_max - w_min), c1, c2)
 
-updateVelItem::(Double, Double, Double)->Double->Double->
+updateVelItem::(RandomGen g)=>(Float, Float, Float)->
                Int->Position->Position->Position->
-               Int->Double->Double
-updateVelItem (w, c1, c2) r1 r2 m gbest pbest x i v =
-  w * v +
-  c1 * r1 * (item pbest m i - item x m i) +
-  c2 * r2 * (item gbest m i - item x m i)
+               Int->Float->Rand g Float
+updateVelItem (w, c1, c2) m gbest pbest p i v =
+  do let x = item pbest m i - item p m i
+     x0 <- if x == 0 then return 0
+           else (c1 * x *) <$> getRandomR (0, 1)
+     let y = item gbest m i - item p m i
+     y0 <- if y == 0 then return 0
+           else (c2 * y *) <$> getRandomR (0, 1)
+     return $ w * v + x0 + y0
+
 
 updateVel::(RandomGen g)=>Double->Int->
                   Position->Position->Position->Velocity->Rand g Velocity
-updateVel c m gbest pbest x v = do
-  r1 <- getRandomR (0, 1)
-  r2 <- getRandomR (0, 1)
-  return $ Vec.imap (updateVelItem (getParameters c) r1 r2 m gbest pbest x) v
+updateVel c m gbest pbest x v =
+  Vec.imapM (updateVelItem (getParameters c) m gbest pbest x) v
 
 pos4i::Int->Velocity->Int->Int
 pos4i m v i = Vec.maxIndex $ Vec.slice (i*m) m v
@@ -50,9 +53,9 @@ pos4i m v i = Vec.maxIndex $ Vec.slice (i*m) m v
 nextPosition::Int->Int->Velocity->Position
 nextPosition n m v =  Vec.generate n $ pos4i m v
 
-data Particle = Particle { pos   :: Position
-                         , vel      :: Velocity
-                         , _order   :: Orders}
+data Particle = Particle { pos    :: Position
+                         , vel    :: Velocity
+                         , _order :: Orders}
 
 instance NFData Particle where
   rnf (Particle a b c) = rnf a `seq` rnf b `seq` rnf c
@@ -62,14 +65,14 @@ instance Chromosome Particle where
 
   crossover p c [Particle gP _ _, Particle pP _ _, Particle cP vel o] =
     do vel' <- updateVel c m gP pP cP vel
-       let pos' = nextPosition n m vel'
-       return $ [Particle pos' vel' o]
+       return $ [Particle (nextPosition n m vel') vel' o]
     where n = nTask p
-          m = nTask p * nType p
+          m = n * nType p
 
   encode p s = do let (o, str) = toPool p s
                       num = nTask p * nTask p * nType p
-                  vel <- Vec.replicateM num $ getRandomR (0, 1)
-                  return $ Particle str vel o
+                      --vel = Vec.replicate num 0
+                  vel <- Vec.replicateM num $ getRandomR (-1, 1)
+                  return $ Particle (Vec.convert str) vel o
 
-  decode _ i = fromPool (_order i) (pos i)
+  decode _ i = fromPool (_order i) (Vec.convert $ pos i)

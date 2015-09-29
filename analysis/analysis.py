@@ -2,7 +2,7 @@
 
 from utils import Normaliser
 from hv import HyperVolume
-from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, dag_pegasus, figure_path_pegasus_bar
+from config import hv_ref, figure_path_pegasus_plot, figure_path_pegasus_trace, figure_path_pegasus_bar
 from query import query
 import pegasus
 

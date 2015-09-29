@@ -19,11 +19,11 @@ type TinyNode = (Time, IntMap.IntMap Data)
 type TinyDAG = Vec.Vector TinyNode
 
 instance Workflow TinyDAG where
-  w_preds w = map fst . IntMap.toList . snd . (Vec.!) w
-  w_hasEdge w ti tj = IntMap.member ti . snd $ (Vec.!) w tj
+  w_preds w = map fst . IntMap.toList . snd . Vec.unsafeIndex w
+  w_hasEdge w ti tj = IntMap.member ti . snd $ Vec.unsafeIndex w tj
 
-  w_comm w ti tj = flip (IntMap.!) ti . snd $ (Vec.!) w tj
-  w_refTime w = fst . (Vec.!) w
+  w_comm w ti tj = flip (IntMap.!) ti . snd $ Vec.unsafeIndex w tj
+  w_refTime w = fst . Vec.unsafeIndex w
   w_nTask = Vec.length
 
 encodeDAG::TinyDAG->BL.ByteString

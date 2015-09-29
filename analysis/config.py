@@ -3,34 +3,36 @@ exp_cmd = "../dist/build/MoWSC-exp/MoWSC-exp"
 arg_tags = {
     "pop_size" : "-p %d",
     "gen_num" : "-g %d",
+    "gen_scale" : "-s %d",
+    "runtime_scale" : "-r %f",
     "prob_xo" : "-c %f",
     "prob_mu" : "-m %f",
 }
 
 args_defaults = {
-    "pop_size" : 15,
-    "gen_num" : 10000,
+    "pop_size" : 16,
+    "gen_scale" : 10,
+    "runtime_scale" : 1,
     "prob_xo" : 1,
     "prob_mu" : 1,
 }
 
 exp_defaults = {
-    "times" : 10,
+    "times" : 2,
     "args" : {}
 }
 
 experiments = {
     "SPEA2*":{"cmd":"spea2_c0",},
-    "SPEA2-C3":{"cmd":"spea2_c3",},
+    # "ESC/P":{"cmd":"spea2_c3_p",},
+    # "ESC/NH":{"cmd":"spea2_c3_nh",},
+    "ESC/F":{"cmd":"spea2_c3_f",},
     "MOABC":{"cmd":"moabc"},
     "NSPSO":{"cmd":"nspso"},
     "MOHEFT":{"times":1,"cmd":"moheft"},
 }
 
 ## DAG
-
-# dax_pegasus_path = "./resources/workflows/Pegasus/%s.xml"
-# dag_pegasus_path = "./resources/workflows/tiny/%s.json"
 
 dax_pegasus_path = "./resources/workflows/Pegasus/task_number/%s.xml"
 dag_pegasus_path = "./resources/workflows/tiny/task_number/%s.json"
@@ -58,78 +60,6 @@ dag_pegasus_unused = [
     # "Inspiral_1000",
 ]
 
-dag_pegasus = [
-    "CyberShake_30",
-    "CyberShake_50",
-    "CyberShake_70",
-    "CyberShake_100",
-    "CyberShake_200",
-    "CyberShake_300",
-    "CyberShake_400",
-    "CyberShake_500",
-    "CyberShake_600",
-    "CyberShake_700",
-    "CyberShake_800",
-    "CyberShake_900",
-    "CyberShake_1000",
-
-    "Montage_30",
-    "Montage_50",
-    "Montage_70",
-    "Montage_100",
-    "Montage_200",
-    "Montage_300",
-    "Montage_400",
-    "Montage_500",
-    "Montage_600",
-    "Montage_700",
-    "Montage_800",
-    "Montage_900",
-    "Montage_1000",
-
-    "Epigenomics_30",
-    "Epigenomics_50",
-    "Epigenomics_70",
-    "Epigenomics_100",
-    "Epigenomics_200",
-    "Epigenomics_300",
-    "Epigenomics_400",
-    "Epigenomics_500",
-    "Epigenomics_600",
-    "Epigenomics_700",
-    "Epigenomics_800",
-    "Epigenomics_900",
-    "Epigenomics_1000",
-
-    "LIGO_30",
-    "LIGO_50",
-    "LIGO_70",
-    "LIGO_100",
-    "LIGO_200",
-    "LIGO_300",
-    "LIGO_400",
-    "LIGO_500",
-    "LIGO_600",
-    "LIGO_700",
-    "LIGO_800",
-    "LIGO_900",
-    "LIGO_1000",
-
-    "SIPHT_30",
-    "SIPHT_50",
-    "SIPHT_70",
-    "SIPHT_100",
-    "SIPHT_200",
-    "SIPHT_300",
-    "SIPHT_400",
-    "SIPHT_500",
-    "SIPHT_600",
-    "SIPHT_700",
-    "SIPHT_800",
-    "SIPHT_900",
-    "SIPHT_1000",
-]
-
 ## Database
 db_addr = 'http://127.0.0.1:5984/'
 db_name = "hookie-exp-test"
@@ -139,7 +69,9 @@ db_name = "hookie-exp-test"
 query_cond = {
     "algorithm" : [
         "SPEA2*",
-        "SPEA2-C3",
+        "ESC/P",
+        "ESC/NH",
+        "ESC/F",
         "MOHEFT",
         "MOABC",
         "NSPSO"

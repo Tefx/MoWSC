@@ -1,13 +1,13 @@
 module Heuristic.BHEFT (bheft) where
 
-import           Heuristic   (InfinityPool, PartialSchedule (..), Pool (..))
-import           Problem     (Cost, Ins, Problem, Schedule, Task, Time, cu,
-                              insPrice, nTask, nType, refTime)
+import           Heuristic       (InfinityPool, PartialSchedule (..), Pool (..))
+import           Problem         (Cost, Ins, Problem, Schedule, Task, Time, cu,
+                                  insPrice, nTask, nType, refTime)
 
-import           Data.List   (minimumBy)
-import           Data.Ord    (comparing)
-import qualified Data.Vector as Vec
-import Control.DeepSeq (NFData (..))
+import           Control.DeepSeq (NFData (..))
+import           Data.List       (minimumBy)
+import           Data.Ord        (comparing)
+import qualified Data.Vector     as Vec
 
 data CPartial pl = CPar { _pool         :: pl
                         , _locations    :: Vec.Vector Ins
@@ -29,13 +29,12 @@ instance PartialSchedule CPartial where
   pool = _pool
 
   putTask p s t i =
-    let (_, ft, pl, pl') = allocIns p s t i
-        -- it = insType pl i
+    let (_, ft, pl') = allocIns p s t i
     in s { _pool = pl'
          , _locations = _locations s Vec.// [(t, i)]
          , _finishTimes = _finishTimes s Vec.// [(t, ft)]
          , _currentTask = i
-         , _currentCost = cost pl' i - cost pl i
+         , _currentCost = cost pl' i - cost (_pool s) i
          -- , _currentCost = refTime p t / cu p it / 3600 * insPrice p it
          , _currentTime = ft}
 

@@ -1,13 +1,13 @@
 module Heuristic.BHI (bhil, bhie, bhie2, bhir) where
 
-import           Heuristic   (InfinityPool, PartialSchedule (..), Pool (..))
-import           Problem     (Cost, Ins, Problem, Schedule, Time, cu, nTask,
-                              nType, qcharge, refTime)
+import           Heuristic       (InfinityPool, PartialSchedule (..), Pool (..))
+import           Problem         (Cost, Ins, Problem, Schedule, Time, cu, nTask,
+                                  nType, qcharge, refTime)
 
-import           Data.List   (minimumBy)
-import           Data.Ord    (comparing)
-import qualified Data.Vector as Vec
-import Control.DeepSeq (NFData (..))
+import           Control.DeepSeq (NFData (..))
+import           Data.List       (minimumBy)
+import           Data.Ord        (comparing)
+import qualified Data.Vector     as Vec
 
 data WeightType = Liner | Exp | Exp2 | Rnd
 
@@ -37,8 +37,8 @@ instance PartialSchedule CPartial where
                       , _lastFT = ft
                       , _locations = _locations s Vec.// [(t, i)]
                       , _finishTimes = _finishTimes s Vec.// [(t, ft)]}
-    where (_, ft, pl, pl') = allocIns p s t i
-          c = cost pl' i - cost pl i
+    where (_, ft, pl') = allocIns p s t i
+          c = cost pl' i - cost (_pool s) i
 
   sortSchedule p ss =
     let ub_min = minimum . map _usedBudget $ ss

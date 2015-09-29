@@ -4,11 +4,11 @@ import           Heuristic
 import           Heuristic.Cheap (cheap)
 import           Problem
 
+import           Control.DeepSeq (NFData (..))
 import           Data.List       (maximumBy, minimumBy, sortBy)
 import           Data.Ord        (comparing)
 import           Data.Vector     (Vector, (//))
 import qualified Data.Vector     as Vec
-import Control.DeepSeq (NFData (..))
 
 data CPartial pl = CPar { _pool        :: pl --Pool
                         , _locations   :: Vector Ins
@@ -33,8 +33,8 @@ instance PartialSchedule CPartial where
                       , _lastC = c
                       , _finishTimes = _finishTimes s // [(t, ft)]
                       , _locations = _locations s // [(t, i)]}
-    where (_, ft, pl, pl') = allocIns p s t i
-          c = cost pl' i - cost pl i
+    where (_, ft, pl') = allocIns p s t i
+          c = cost pl' i - cost (_pool s) i
 
   sortSchedule _ ss =  (:[]) . _update rcb .
                        maximumBy (comparing _worthiness) $ ss
