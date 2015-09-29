@@ -11,14 +11,14 @@ arg_tags = {
 
 args_defaults = {
     "pop_size" : 16,
-    "gen_scale" : 10,
+    "gen_scale" : 20,
     "runtime_scale" : 1,
     "prob_xo" : 1,
     "prob_mu" : 1,
 }
 
 exp_defaults = {
-    "times" : 1,
+    "times" : 10,
     "args" : {}
 }
 
@@ -29,7 +29,7 @@ experiments = {
     "ESC/F":{"cmd":"spea2_c3_f",},
     "MOABC":{"cmd":"moabc"},
     # "NSPSO":{"cmd":"nspso"},
-    # "MOHEFT":{"times":1,"cmd":"moheft"},
+    "MOHEFT":{"times":1,"cmd":"moheft"},
 }
 
 ## DAG
