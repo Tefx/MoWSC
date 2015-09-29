@@ -11,7 +11,7 @@ executable MoWSC-exp
     hs-source-dirs: src
     include-dirs: c_src
     extra-lib-dirs: c_src
-    extra-libraries: evaluation, spea2, nsga2, chromosome
+    extra-libraries: evaluation, spea2, nsga2, chromosome, pso
 
 executable MoWSC-convert
     main-is: Convert.hs

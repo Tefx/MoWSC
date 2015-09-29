@@ -1,57 +1,61 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE RankNTypes               #-}
 
 module EA.PSO (Particle) where
 
 import           EA
-import           MOP                  (Objectives, getObjs, (<<<))
-import           Problem              (Orders, fromPool, nTask, nType, toPool)
+import           MOP                          (Objectives, getObjs, (<<<))
+import           Problem                      (Orders, fromPool, nTask, nType,
+                                               toPool)
 
-import           Control.DeepSeq      (NFData (..))
-import           Control.Monad        (replicateM)
-import           Control.Monad.Random (Rand, RandomGen, getRandomR)
-import           Data.Functor         ((<$>))
-import qualified Data.Vector.Unboxed  as Vec
+import           Control.DeepSeq              (NFData (..))
+import           Control.Monad                (replicateM)
+import           Control.Monad.Random         (Rand, RandomGen, getRandomR)
+import           Data.Functor                 ((<$>))
+import qualified Data.Vector.Storable         as SV
+import qualified Data.Vector.Storable.Mutable as SVM
 import           GHC.Float
 
-import           Debug.Trace
+import           Control.Monad.ST.Safe        (runST, stToIO)
+import           Foreign                      hiding (unsafeForeignPtrToPtr,
+                                               unsafePerformIO)
+import           Foreign.C.Types
+import           Foreign.ForeignPtr.Unsafe    (unsafeForeignPtrToPtr)
+import           System.IO.Unsafe             (unsafePerformIO)
 
-type Position = Vec.Vector Int
-type Velocity = Vec.Vector Float
+type Position = SV.Vector CInt
+type Velocity = SV.Vector CDouble
 
-item::Position->Int->Int->Float
-{-#INLINE item#-}
-item p m i = if (Vec.unsafeIndex p $ i `quot` m) == i `rem` m then 1 else 0
+foreign import ccall "pso.h updateVelocity" c_updateVel::
+  CInt->CInt->CDouble->CDouble->CDouble->Ptr CInt->Ptr CInt->Ptr CInt->Ptr CDouble->IO ()
 
-getParameters::Double->(Float, Float, Float)
+getParameters::Double->(Double, Double, Double)
 getParameters c = let w_max = 1.0
                       w_min = 0.4
                       c1 = 2
                       c2 = 2
-                  in (w_max - double2Float c * (w_max - w_min), c1, c2)
+                  in (w_max - c * (w_max - w_min), c1, c2)
 
-updateVelItem::(RandomGen g)=>(Float, Float, Float)->
-               Int->Position->Position->Position->
-               Int->Float->Rand g Float
-updateVelItem (w, c1, c2) m gbest pbest p i v =
-  do let x = item pbest m i - item p m i
-     x0 <- if x == 0 then return 0
-           else (c1 * x *) <$> getRandomR (0, 1)
-     let y = item gbest m i - item p m i
-     y0 <- if y == 0 then return 0
-           else (c2 * y *) <$> getRandomR (0, 1)
-     return $ w * v + x0 + y0
-
-
-updateVel::(RandomGen g)=>Double->Int->
-                  Position->Position->Position->Velocity->Rand g Velocity
-updateVel c m gbest pbest x v =
-  Vec.imapM (updateVelItem (getParameters c) m gbest pbest x) v
+foreignUpdateVel::Double->Int->
+                  Position->Position->Position->Velocity->IO Velocity
+foreignUpdateVel c m gbest pbest x v = do
+  v' <- SV.unsafeThaw v
+  let (w, c1, c2) = getParameters c
+      (g_fptr, n) = SV.unsafeToForeignPtr0 gbest
+      (p_fptr, _) = SV.unsafeToForeignPtr0 pbest
+      (x_fptr, _) = SV.unsafeToForeignPtr0 x
+  SVM.unsafeWith v' $
+    c_updateVel (toEnum n) (toEnum m) (realToFrac w) (realToFrac c1) (realToFrac c2)
+    (unsafeForeignPtrToPtr g_fptr)
+    (unsafeForeignPtrToPtr p_fptr)
+    (unsafeForeignPtrToPtr x_fptr)
+  SV.unsafeFreeze v'
 
 pos4i::Int->Velocity->Int->Int
-pos4i m v i = Vec.maxIndex $ Vec.slice (i*m) m v
+pos4i m v i = SV.maxIndex $ SV.unsafeSlice (i*m) m v
 
 nextPosition::Int->Int->Velocity->Position
-nextPosition n m v =  Vec.generate n $ pos4i m v
+nextPosition n m v =  SV.generate n $ fromIntegral . pos4i m v
 
 data Particle = Particle { pos    :: Position
                          , vel    :: Velocity
@@ -64,15 +68,14 @@ instance Chromosome Particle where
   repMode _ = (3, 1)
 
   crossover p c [Particle gP _ _, Particle pP _ _, Particle cP vel o] =
-    do vel' <- updateVel c m gP pP cP vel
-       return $ [Particle (nextPosition n m vel') vel' o]
-    where n = nTask p
-          m = n * nType p
+    let n = nTask p
+        m = n * nType p
+        vel' = unsafePerformIO $ foreignUpdateVel c m gP pP cP vel
+    in  return $ [Particle (nextPosition n m vel') vel' o]
 
   encode p s = do let (o, str) = toPool p s
                       num = nTask p * nTask p * nType p
-                      --vel = Vec.replicate num 0
-                  vel <- Vec.replicateM num $ getRandomR (-1, 1)
-                  return $ Particle (Vec.convert str) vel o
+                  vel <- SV.replicateM num $ getRandomR (-1, 1)
+                  return $ Particle (SV.map toEnum . SV.convert $ str) vel o
 
-  decode _ i = fromPool (_order i) (Vec.convert $ pos i)
+  decode _ i = fromPool (_order i) (SV.convert . SV.map fromIntegral $ pos i)

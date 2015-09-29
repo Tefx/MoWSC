@@ -18,18 +18,18 @@ args_defaults = {
 }
 
 exp_defaults = {
-    "times" : 2,
+    "times" : 1,
     "args" : {}
 }
 
 experiments = {
     "SPEA2*":{"cmd":"spea2_c0",},
-    # "ESC/P":{"cmd":"spea2_c3_p",},
+    "ESC/P":{"cmd":"spea2_c3_p",},
     # "ESC/NH":{"cmd":"spea2_c3_nh",},
     "ESC/F":{"cmd":"spea2_c3_f",},
     "MOABC":{"cmd":"moabc"},
-    "NSPSO":{"cmd":"nspso"},
-    "MOHEFT":{"times":1,"cmd":"moheft"},
+    # "NSPSO":{"cmd":"nspso"},
+    # "MOHEFT":{"times":1,"cmd":"moheft"},
 }
 
 ## DAG
@@ -72,7 +72,7 @@ query_cond = {
         "ESC/P",
         "ESC/NH",
         "ESC/F",
-        "MOHEFT",
+        # "MOHEFT",
         "MOABC",
         "NSPSO"
     ],

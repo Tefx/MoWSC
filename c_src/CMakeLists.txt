@@ -7,6 +7,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -O3 -Wall -Werror")
 
 add_library(chromosome STATIC chromosome.c)
 add_library(evaluation STATIC evaluation.c)
+add_library(pso STATIC pso.c)
 
 add_library(spea2_core OBJECT spea2.c select.c)
 add_library(spea2 STATIC $<TARGET_OBJECTS:spea2_core>)

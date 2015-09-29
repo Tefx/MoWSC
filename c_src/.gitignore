@@ -2,3 +2,4 @@
 *.h.gch
 /cmake_install.cmake
 /Makefile
+/CMakeCache.txt
