@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "pso.h"
 
 bool initialized = false;
@@ -30,5 +31,29 @@ void updateVelocity(int n, int m, double w, double c1, double c2, int* gbest, in
         vel[i*m+gbest[i]] += updateItem(c1, c2, gbest, pbest, p, i, gbest[i]);
         vel[i*m+pbest[i]] += updateItem(c1, c2, gbest, pbest, p, i, pbest[i]);
         vel[i*m+p[i]] += updateItem(c1, c2, gbest, pbest, p, i, p[i]);
+    }
+}
+
+void randVelocity(int n, double* vel) {
+    if (!initialized) {
+        srand((unsigned int)time(NULL));
+        initialized = true;
+    }
+
+    for (int i=0; i<n; i++)
+        vel[i] = (double)rand() / RAND_MAX * 2 - 1;
+}
+
+void updatePosition(int n, int m, double* vel, int* pos){
+    double max;
+    for (int i=0; i<n; i++){
+        max = vel[i*m];
+        pos[i] = 0;
+        for (int j=i*m+1;j<i*(m+1); j++){
+            if (vel[j] > max) {
+                max = vel[j];
+                pos[i] = j-i*m;
+            }
+        }
     }
 }

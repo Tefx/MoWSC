@@ -12,7 +12,7 @@ import Data.Set (member, insert)
 import qualified Data.Set as Set
 import qualified Data.IntMap as IM
 import Data.IntMap (IntMap)
-import Control.DeepSeq (NFData (..), deepseq)
+import Control.DeepSeq (NFData (..))
 import Data.Foldable (foldr')
 import GHC.Float
 
@@ -36,9 +36,7 @@ class PartialSchedule ps where
     where o = getOrder p
           pl = pool s0
           f t ss = let ss' = ss >>= next p t
-                   in ss' `deepseq` if length ss' <= k
-                                    then ss'
-                                    else take k $ sortSchedule p ss'
+                   in if length ss' <= k then ss' else take k $ sortSchedule p ss'
 
 -- Pool class manages an available instance pool --
 

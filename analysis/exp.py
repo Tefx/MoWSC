@@ -62,7 +62,7 @@ if __name__ == '__main__':
             print "Initialising database.."
             init_db()
     else:
-        pool = Pool(2)
+        pool = Pool(1)
         # for w in pegasus.genWorkflow(task_number=pegasus.TASK_NUMBERS):
         for w in pegasus.genWorkflow():
             for exp, conf in experiments.iteritems():

@@ -28,13 +28,17 @@ type Velocity = SV.Vector CDouble
 
 foreign import ccall "pso.h updateVelocity" c_updateVel::
   CInt->CInt->CDouble->CDouble->CDouble->Ptr CInt->Ptr CInt->Ptr CInt->Ptr CDouble->IO ()
+foreign import ccall "pso.h randVelocity" c_randVel::CInt->Ptr CDouble->IO ()
+foreign import ccall "pso.h updatePosition" c_updatePos::
+  CInt->CInt->Ptr CDouble->Ptr CInt->IO ()
 
-getParameters::Double->(Double, Double, Double)
-getParameters c = let w_max = 1.0
-                      w_min = 0.4
-                      c1 = 2
-                      c2 = 2
-                  in (w_max - c * (w_max - w_min), c1, c2)
+getParameters::Double->(CDouble, CDouble, CDouble)
+getParameters c =
+  let w_max = 1.0
+      w_min = 0.4
+      c1 = 2
+      c2 = 2
+  in (realToFrac $ w_max - c * (w_max - w_min), c1, c2)
 
 foreignUpdateVel::Double->Int->
                   Position->Position->Position->Velocity->IO Velocity
@@ -45,17 +49,24 @@ foreignUpdateVel c m gbest pbest x v = do
       (p_fptr, _) = SV.unsafeToForeignPtr0 pbest
       (x_fptr, _) = SV.unsafeToForeignPtr0 x
   SVM.unsafeWith v' $
-    c_updateVel (toEnum n) (toEnum m) (realToFrac w) (realToFrac c1) (realToFrac c2)
+    c_updateVel (toEnum n) (toEnum m) w c1 c2
     (unsafeForeignPtrToPtr g_fptr)
     (unsafeForeignPtrToPtr p_fptr)
     (unsafeForeignPtrToPtr x_fptr)
   SV.unsafeFreeze v'
 
-pos4i::Int->Velocity->Int->Int
-pos4i m v i = SV.maxIndex $ SV.unsafeSlice (i*m) m v
+updatePos::Int->Int->Velocity->IO Position
+updatePos n m v = do
+  pos <- SVM.unsafeNew n
+  let (v_fptr, _) = SV.unsafeToForeignPtr0 v
+  SVM.unsafeWith pos $ c_updatePos (toEnum n) (toEnum m) (unsafeForeignPtrToPtr v_fptr)
+  SV.unsafeFreeze pos
 
-nextPosition::Int->Int->Velocity->Position
-nextPosition n m v =  SV.generate n $ fromIntegral . pos4i m v
+randVel::Int->IO Velocity
+randVel n = do
+  v <- SVM.unsafeNew n
+  SVM.unsafeWith v . c_randVel $ toEnum n
+  SV.unsafeFreeze v
 
 data Particle = Particle { pos    :: Position
                          , vel    :: Velocity
@@ -71,11 +82,14 @@ instance Chromosome Particle where
     let n = nTask p
         m = n * nType p
         vel' = unsafePerformIO $ foreignUpdateVel c m gP pP cP vel
-    in  return $ [Particle (nextPosition n m vel') vel' o]
+        pos' = unsafePerformIO $ updatePos n m vel'
+    in  return $ [Particle pos' vel' o]
+
+  farewell i = i {chrm = (chrm i){vel=SV.empty}}
 
   encode p s = do let (o, str) = toPool p s
-                      num = nTask p * nTask p * nType p
-                  vel <- SV.replicateM num $ getRandomR (-1, 1)
+                      vel = unsafePerformIO . randVel $ nTask p * nTask p * nType p
+                  -- vel <- SV.replicateM num $ getRandomR (-1, 1)
                   return $ Particle (SV.map toEnum . SV.convert $ str) vel o
 
   decode _ i = fromPool (_order i) (SV.convert . SV.map fromIntegral $ pos i)

@@ -191,7 +191,7 @@ instance (ToJSON a)=>ToJSON (Seq.Seq a) where
 instance ToJSON EATrace
 
 type ExpType o c = (RandomGen g)=>
-                   Problem->EASetup->Rand g (With EATrace (Population o c))
+                   Problem->EASetup->Rand g (With NullInfo (Population o c))
 
 runEA::(Objectives o, RandomGen g, ExtraEAInfo i)=>g->
        Rand g (With i (Population o c))->(i, [[ObjValue]])

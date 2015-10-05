@@ -31,6 +31,8 @@ import           Problem.Foreign      (computeObjs)
 import           Utils
 import           Utils.Random         (doWithProb, probApply)
 
+import           Debug.Trace          (traceShow)
+
 type Population o c = Vec.Vector (Individual o c)
 type MutSelector = (RandomGen g, WithObjs o)=>Vec.Vector o->Int->Rand g [o]
 type EnvSelector = (WithObjs o)=>Vec.Vector o->Vec.Vector o->Vec.Vector o
@@ -69,14 +71,12 @@ class (NFData a)=>Chromosome a where
   decode::Problem->a->Schedule
   encode::(RandomGen g)=>Problem->Schedule->Rand g a
 
-  farewell::Individual o a->Individual o a->Individual o a
-  avatar::a->a
+  farewell::Individual o a->Individual o a
 
   mutate _ _ = return
   crossover _ _ = return
   repMode _ = (2, 1)
-  farewell _ a = a
-  avatar a = a
+  farewell a = a
 
 class (NFData a)=>ExtraEAInfo a where
   empty::EASetup->a
@@ -157,7 +157,7 @@ psoBreeder eSel p c cur _ is =
      newPs <- cBulkEval p .Vec.fromList .concat <$>
               (mapM (reproduce p c pg) $
                zipWith3 (\x y z->[x, y, z]) gPs (Vec.toList pPs) cPs)
-     return $ (eSel pPs newPs) Vec.++ newPs
+     return $ eSel pPs newPs Vec.++ newPs
   where pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
 psoInitialiserMaker::PopInitialiser->PopInitialiser
