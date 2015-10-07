@@ -5,7 +5,7 @@ import Heuristic
 
 import Data.Vector (Vector, (//))
 import qualified Data.Vector as Vec
-import Data.List (sortBy)
+import Data.List (sortBy, minimumBy)
 import Data.Ord (comparing)
 import Control.DeepSeq (NFData (..))
 
@@ -25,7 +25,7 @@ instance PartialSchedule CPartial where
   finishTimes = _finishTimes
   pool = _pool
 
-  sortSchedule _ ss = sortBy (comparing $ \x->(_lastFT x, _lastC x)) $ ss
+  sortSchedule _ ss = [minimumBy (comparing $ \x->(_lastFT x, _lastC x)) $ ss]
 
   putTask p s t i = s { _pool = pl'
                       , _lastFT = ft

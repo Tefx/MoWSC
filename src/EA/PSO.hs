@@ -16,12 +16,15 @@ import qualified Data.Vector.Storable         as SV
 import qualified Data.Vector.Storable.Mutable as SVM
 import           GHC.Float
 
+import           Control.DeepSeq              (deepseq)
 import           Control.Monad.ST.Safe        (runST, stToIO)
 import           Foreign                      hiding (unsafeForeignPtrToPtr,
                                                unsafePerformIO)
 import           Foreign.C.Types
 import           Foreign.ForeignPtr.Unsafe    (unsafeForeignPtrToPtr)
 import           System.IO.Unsafe             (unsafePerformIO)
+
+import           Debug.Trace                  (traceShow)
 
 type Position = SV.Vector CInt
 type Velocity = SV.Vector CDouble
@@ -55,11 +58,11 @@ foreignUpdateVel c m gbest pbest x v = do
     (unsafeForeignPtrToPtr x_fptr)
   SV.unsafeFreeze v'
 
-updatePos::Int->Int->Velocity->IO Position
-updatePos n m v = do
+newPos::Int->Int->Velocity->IO Position
+newPos n m v = do
   pos <- SVM.unsafeNew n
-  let (v_fptr, _) = SV.unsafeToForeignPtr0 v
-  SVM.unsafeWith pos $ c_updatePos (toEnum n) (toEnum m) (unsafeForeignPtrToPtr v_fptr)
+  let v_ptr = unsafeForeignPtrToPtr . fst $ SV.unsafeToForeignPtr0 v
+  SVM.unsafeWith pos $ c_updatePos (toEnum n) (toEnum m) v_ptr
   SV.unsafeFreeze pos
 
 randVel::Int->IO Velocity
@@ -82,14 +85,14 @@ instance Chromosome Particle where
     let n = nTask p
         m = n * nType p
         vel' = unsafePerformIO $ foreignUpdateVel c m gP pP cP vel
-        pos' = unsafePerformIO $ updatePos n m vel'
-    in  return $ [Particle pos' vel' o]
+        pos' = unsafePerformIO $ newPos n m vel'
+    in  return $ pos' `deepseq` vel' `deepseq` [Particle pos' vel' o]
 
   farewell i = i {chrm = (chrm i){vel=SV.empty}}
 
   encode p s = do let (o, str) = toPool p s
-                      vel = unsafePerformIO . randVel $ nTask p * nTask p * nType p
-                  -- vel <- SV.replicateM num $ getRandomR (-1, 1)
+                      -- vel = unsafePerformIO . randVel $ nTask p * nTask p * nType p
+                      vel = SV.replicate (nTask p * nTask p * nType p) 0
                   return $ Particle (SV.map toEnum . SV.convert $ str) vel o
 
   decode _ i = fromPool (_order i) (SV.convert . SV.map fromIntegral $ pos i)

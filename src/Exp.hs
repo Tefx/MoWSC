@@ -191,7 +191,7 @@ instance (ToJSON a)=>ToJSON (Seq.Seq a) where
 instance ToJSON EATrace
 
 type ExpType o c = (RandomGen g)=>
-                   Problem->EASetup->Rand g (With NullInfo (Population o c))
+                   Problem->EASetup->Rand g (With EATrace (Population o c))
 
 runEA::(Objectives o, RandomGen g, ExtraEAInfo i)=>g->
        Rand g (With i (Population o c))->(i, [[ObjValue]])
@@ -213,17 +213,17 @@ spea2 i p c = evalEA p c $ EAToolbox { popInit = i
                                      , breeder = normalBreederF}
 
 abc::(Objectives o, Chromosome c)=>PopInitialiser->ExpType o c
-abc i p c = evalEA p c' $ EAToolbox { popInit = i
-                                    , mutSel = rouletteSelGen assignSPEA2Fit
-                                    , envSel = EF.spea2Select
-                                    , breeder = abcBreeder}
-  where c' = c{numGen=numGen c `quot` 2}
+abc i p c = evalEA p c $ EAToolbox { popInit = i
+                                   , mutSel = rouletteSelGen assignSPEA2Fit
+                                   , envSel = spea2Select
+                                   , breeder = abcBreeder}
+  --where c' = c{numGen=numGen c `quot` 2}
 
 pso::(Objectives o)=>PopInitialiser->ExpType o Particle
 pso i p c = evalEA p c $ EAToolbox { popInit = psoInitialiserMaker i
                                    , mutSel = psoMSel
                                    , envSel = psoESel
-                                   , breeder = psoBreeder EF.nsga2Select}
+                                   , breeder = psoBreeder nsga2Select}
 
 eaNSGA2_C3::ExpType MakespanCost C3
 eaNSGA2_C3 = nsga2 randTypeSRH
@@ -244,10 +244,10 @@ eaSPEA2_C5::ExpType MakespanCost C5
 eaSPEA2_C5 = spea2 randTypeSRH
 
 eaMOABC::ExpType MakespanCost C0
-eaMOABC = abc randPoolOrHeft
+eaMOABC = abc randPool
 
 eaNSPSO::ExpType MakespanCost Particle
-eaNSPSO = pso randPoolOrHeft
+eaNSPSO = pso randPool
 
 data BudgetInfo = BI { budgets  :: [Double]
                      , heftRes  :: [Double]

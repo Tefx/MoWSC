@@ -31,5 +31,5 @@ def query(dag, keys, field):
         yield res.key, res.value
 
 if __name__ == '__main__':
-    for k,v in query("CyberShake_30", ["algorithm", "gen_num"], "results"):
+    for k,v in query("CyberShake_30", ["algorithm", "runtime_scale"], "results"):
         print k

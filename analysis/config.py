@@ -10,25 +10,26 @@ arg_tags = {
 }
 
 args_defaults = {
-    "pop_size" : 16,
-    "gen_scale" : 20,
-    "runtime_scale" : 1,
+    "pop_size" : 20,
+    "gen_scale" : 10,
+    "runtime_scale" : 0.25,
     "prob_xo" : 1,
     "prob_mu" : 1,
 }
 
 exp_defaults = {
-    "times" : 5,
+    "times" : 2,
     "args" : {}
 }
 
 experiments = {
-    # "SPEA2*":{"cmd":"spea2_c0",},
-    # "ESC/P":{"cmd":"spea2_c3_p",},
-    # "ESC/F":{"cmd":"spea2_c3_f",},
-    # "MOABC":{"cmd":"moabc"},
-    "NSPSO":{"cmd":"nspso"},
-    # "MOHEFT":{"times":1,"cmd":"moheft"},
+    "SPEA2*":{"cmd":"spea2_c0",},
+    "ESC/P":{"times":10, "cmd":"spea2_c3_p",},
+    "ESC/F":{"times":10, "cmd":"spea2_c3_f",},
+    "ESC/NH":{"times":10, "cmd":"spea2_c3_nh",},
+    "MOABC":{"cmd":"moabc"},
+    "NSPSO":{"times":1, "cmd":"nspso"},
+    "MOHEFT":{"times":1,"cmd":"moheft"},
 }
 
 ## DAG

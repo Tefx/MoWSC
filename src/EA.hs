@@ -104,7 +104,7 @@ instance ExtraEAInfo EATrace where
                                        Vec.unsafeTake (sizePop c) pop
                             in EATrace $ trc Seq.|> objs
     | otherwise = i
-    where step = 10
+    where step = numGen c `quot` 50
 
 evalEA::(Chromosome c, Objectives o, RandomGen g, ExtraEAInfo i)=>
         Problem->EASetup->EAToolbox->Rand g (With i (Population o c))
@@ -112,7 +112,7 @@ evalEA p c e = do cs0 <- (popInit e) p (sizePop c)
                   pop0 <- Vec.mapM (encode p) cs0
                   let p0 = attach (empty c) . cBulkEval p $ pop0
                   With a b <- foldM' (evolve p c e) (force p0) [0..numGen c-1]
-                  return . With a $ b
+                  return . With a $ Vec.unsafeTake (sizePop c) b
 
 evolve::(ExtraEAInfo i, Objectives o, Chromosome c, RandomGen g)=>
         Problem->EASetup->EAToolbox->
@@ -157,7 +157,7 @@ psoBreeder eSel p c cur _ is =
      newPs <- cBulkEval p .Vec.fromList .concat <$>
               (mapM (reproduce p c pg) $
                zipWith3 (\x y z->[x, y, z]) gPs (Vec.toList pPs) cPs)
-     return $ eSel pPs newPs Vec.++ newPs
+     return $ (Vec.map farewell $ eSel pPs newPs) Vec.++ newPs
   where pg = (fromIntegral cur /) . fromIntegral $ numGen c
 
 psoInitialiserMaker::PopInitialiser->PopInitialiser
@@ -174,12 +174,9 @@ normalBreederF p c cur mSel is =
 reproduce::(Chromosome c, RandomGen g)=>
            Problem->EASetup->Double->[Individual o c]->Rand g [c]
 reproduce p c cur is = do
-  --let cs = map chrm is
-  cs' <- probApply (probCrs c) (crossover p cur) $ map chrm is
-  cs'' <- mapM (probApply (probMut c) (mutate p cur)) cs'
-  --cs' <- join . doWithProb (probCrs c) (crossover p cur) return $ cs
-  --cs'' <- mapM (join . doWithProb (probMut c) (mutate p cur) return) $ force cs'
-  return cs''
+  cs <- probApply (probCrs c) (crossover p cur) $ map chrm is
+  cs' <- mapM (probApply (probMut c) (mutate p cur)) cs
+  return cs'
 
 envSelectN::(WithObjs o)=>EnvSelector->Int->Vec.Vector o->Vec.Vector o
 envSelectN sel n s = let (s0, s1) = Vec.splitAt n s
