@@ -12,24 +12,24 @@ arg_tags = {
 args_defaults = {
     "pop_size" : 20,
     "gen_scale" : 10,
-    "runtime_scale" : 0.25,
+    "runtime_scale" : 1,
     "prob_xo" : 1,
     "prob_mu" : 1,
 }
 
 exp_defaults = {
-    "times" : 2,
+    "times" : 1,
     "args" : {}
 }
 
 experiments = {
     "SPEA2*":{"cmd":"spea2_c0",},
-    "ESC/P":{"times":10, "cmd":"spea2_c3_p",},
-    "ESC/F":{"times":10, "cmd":"spea2_c3_f",},
-    "ESC/NH":{"times":10, "cmd":"spea2_c3_nh",},
-    "MOABC":{"cmd":"moabc"},
-    "NSPSO":{"times":1, "cmd":"nspso"},
-    "MOHEFT":{"times":1,"cmd":"moheft"},
+    # "ESC/P":{"times":10, "cmd":"spea2_c3_p",},
+    # "ESC/F":{"times":10, "cmd":"spea2_c3_f",},
+    # "ESC/NH":{"times":10, "cmd":"spea2_c3_nh",},
+    # "MOABC":{"cmd":"moabc"},
+    # "NSPSO":{"times":1, "cmd":"nspso"},
+    # "MOHEFT":{"times":1,"cmd":"moheft"},
 }
 
 ## DAG
@@ -69,7 +69,7 @@ db_name = "hookie-exp-test"
 query_cond = {
     "algorithm" : [
         "SPEA2*",
-        "ESC/P",
+        # "ESC/P",
         "ESC/NH",
         "ESC/F",
         "MOHEFT",
@@ -80,10 +80,12 @@ query_cond = {
 
 ## Hypervolume
 
-hv_ref = [1.01, 1.01]
+hv_ref = [1, 1]
 
 ## Plotting
 
-figure_path_pegasus_plot = "./results/"
+figure_path_pegasus_plot = "./results/fronts/"
 figure_path_pegasus_trace = "./results/trace/"
 figure_path_pegasus_bar = "./results/bar/"
+figure_path_pegasus_rts = "./results/rts/"
+figure_path_pegasus_hvs = "./results/hvs/"

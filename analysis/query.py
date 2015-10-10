@@ -32,4 +32,4 @@ def query(dag, keys, field):
 
 if __name__ == '__main__':
     for k,v in query("CyberShake_30", ["algorithm", "runtime_scale"], "results"):
-        print k
+        print k, v
