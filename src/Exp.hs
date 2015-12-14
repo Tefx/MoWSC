@@ -99,14 +99,15 @@ import           System.Console.CmdArgs        (Data, Typeable, argPos, cmdArgs,
                                                 typFile, (&=))
 import           System.Random.Mersenne.Pure64 (PureMT, newPureMT)
 
+
 data Exp = Exp { alg       :: String
                , limit     :: Int
                , popsize   :: Int
                , gen       :: Int
-               , gen_scale :: Int
+               , genScale :: Int
                , pcr       :: Double
                , pmu       :: Double
-               , rt_scale  :: Double
+               , rtScale  :: Double
                , file      :: [FilePath]} deriving (Data, Typeable, Show, Eq)
 
 ea::Exp
@@ -117,13 +118,13 @@ ea = Exp { alg = "heft" &= argPos 0 &= typ "ALG"
                      &= help "Size of Population."
          , gen = 1000 &= name "g" &= typ "NUM"
                  &= help "Number of Generation."
-         , gen_scale = 0 &= name "s" &= typ "NUM"
+         , genScale = 0 &= name "s" &= typ "NUM"
                        &= help "Gen scale to number of tasks"
          , pcr = 1 &= name "c" &= typ "NUM"
                  &= help "prob of Crossover."
          , pmu = 1 &= name "m" &= typ "NUM"
                  &= help "prob of Mutation."
-         , rt_scale = 1 &= name "r" &= typ "NUM"
+         , rtScale = 1 &= name "r" &= typ "NUM"
                       &= help "Running time scale"
          , file = def &= argPos 1 &= typFile
          } &= summary "Cloud Workflow Scheduling Experiment"
@@ -133,9 +134,9 @@ process args = do
   w <- DAG.fromFile . head $ file args
   s <- EC2.mkService $ limit args
   g <- newXorshift
-  let p = Prob w s $ rt_scale args
-      ec = EASetup { numGen = if (gen_scale args == 0) then gen args
-                              else gen_scale args * nTask p
+  let p = Prob w s $ rtScale args
+      ec = EASetup { numGen = if (genScale args == 0) then gen args
+                              else genScale args * nTask p
                    , sizePop = popsize $ args
                    , probCrs = pcr $ args
                    , probMut = pmu $ args}
@@ -187,8 +188,10 @@ deriving instance Generic EATrace
 deriving instance Show EATrace
 instance (ToJSON a)=>ToJSON (Seq.Seq a) where
   toJSON = toJSON . DF.toList
-
 instance ToJSON EATrace
+  
+
+
 
 type ExpType o c = (RandomGen g)=>
                    Problem->EASetup->Rand g (With EATrace (Population o c))

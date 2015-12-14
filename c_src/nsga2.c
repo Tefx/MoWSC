@@ -5,6 +5,7 @@
 
 #include <malloc.h>
 #include <stdlib.h>
+#include "select.h"
 #include "nsga2.h"
 
 typedef struct list_node {

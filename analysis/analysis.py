@@ -316,7 +316,7 @@ def plot_front(d, save=None, pareto=True):
             mark = ".-"
         else:
             mark = "."
-        lines.append(ax.plot(x, y, mark, color=colormaps[k], lw=0.5)[0])
+        lines.append(ax.plot(x, y, mark, color=colormaps[k], lw=0.4)[0])
         names.append(k)
 
     ax.spines['top'].set_visible(False)
@@ -324,7 +324,7 @@ def plot_front(d, save=None, pareto=True):
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_ticks_position('bottom')
     ax.set_ylim(0, 100)
-
+    #
     plt.tight_layout()
     if save:
         plt.savefig(figure_path_pegasus_plot + save + ".jpg", format="jpeg")
@@ -334,12 +334,13 @@ def plot_front(d, save=None, pareto=True):
 
 def plot_legend(path, lines, names, single=False):
     global legend
+    names = ["ESC" if x == "ESC/F" else x for x in names]
     if legend:
             if single:
                 legendfig, ax = plt.subplots(figsize=(4, 3))
                 legendfig.legend(lines, names, loc="upper center", numpoints=1)
             else:
-                legendfig, ax = plt.subplots(figsize=(16, 0.5))
+                legendfig, ax = plt.subplots(figsize=(14, 0.5))
                 legendfig.legend(lines, names, loc="center", ncol=len(lines), numpoints=1)
             ax.set_visible(False)
             legendfig.savefig(path + "legend.jpg", format="jpeg")
@@ -404,7 +405,7 @@ def setup_mpl():
     fig_width_pt = 240  # Get this from LaTeX using \showthe\columnwidth
     inches_per_pt = 1.0/72.27               # Convert pt to inch
     fig_width = fig_width_pt*inches_per_pt  # width in inches
-    fig_height = fig_width_pt*inches_per_pt * 0.9 # height in inches
+    fig_height = fig_width_pt*inches_per_pt * 0.8 # height in inches
     fig_size =  [fig_width,fig_height]
     params = {'figure.figsize': fig_size}
     mpl.rcParams.update(params)
@@ -461,6 +462,11 @@ def plot_hvs(ds, save=None):
     else:
         plt.show()
 
+def format_res(dag, res):
+    res.sort(key=lambda x:x[0])
+    s = ",".join(["(%.2f, %.2f)" % (x[0], x[1]) for x in res])
+    print "%s:\r\n%s\r\n" % (dag, s)
+
 if __name__ == '__main__':
     from sys import argv
     # keys = ["algorithm", "pop_size"]
@@ -484,6 +490,8 @@ if __name__ == '__main__':
             print_res(dag, budget_results(dag, keys))
         elif argv[1] == "rts":
             plot_rts(fetch_rts(dag), dag)
+        elif argv[1] == "res":
+            format_res(dag, front_objs(dag, keys)[argv[2]])
 
     if argv[1] == "hv_lines":
         for app in pegasus.APPs:
